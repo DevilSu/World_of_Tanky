@@ -24,18 +24,25 @@
 
 // server action
 #define SER_ST0P 2 // tell tank ot target to stop
-#define SER_MOVE_Y 0 // tell tank to move
-#define SER_MOVE_N 1 // tell tank to move
-#define SER_SHOT_Y 2 // tell tank to turn on lazer
-#define SER_SHOT_N 3 // tell tank to turn on lazer
+#define SER_MOVE_BGN 0 // tell tank to move
+#define SER_MOVE_END 1 // tell tank to move
+#define SER_SHOT_BGN 2 // tell tank to turn on lazer
+#define SER_SHOT_END 3 // tell tank to turn on lazer
 
-#define SER_SCAN_Y 4 // tell target to scan
-#define SER_SCAN_N 5 // tell target to scan
+#define SER_SCAN_BGN 4 // tell target to scan
+#define SER_SCAN_END 5 // tell target to scan
 
 // tank action
-#define TNK_MOVE_C 2 // tell server move complete
+#define TNK_MOVE_CPL 2 // tell server move complete
 #define TNK_PING 3
 
+// State
+#define STATE_NOTHIN 0
+#define	STATE_MOVING 1
+#define	STATE_ENDING 2
+#define STATE_TRGTON 3
+#define	STATE_SCNLSR 4
+#define STATE_TRGTOF 5
 
 typedef struct device
 {
@@ -47,6 +54,8 @@ typedef struct device
 
     // device spec info
     // ?????
+    int state;
+    int new_comer;
     int health;
 
 }DEVICE;
