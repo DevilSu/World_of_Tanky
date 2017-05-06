@@ -1,25 +1,114 @@
 #include <SoftwareSerial.h>
 #include "Arduino.h"
 
-int prev;
+// Router information
+#define SSID "EECS822"
+#define SSID_PASS "eecslab822"
+
+// TCP server information
+#define IP "192.168.0.197"
+#define PORT 5000
+
+#define LED1 7
+#define LED2 4
+// Pin out information
+SoftwareSerial ESP8266(12,11); // RX, TX
+
+// Function declaration
+void esp8266_sendCmd( char *str, int time_delay );
+void esp8266_sendData( char *str );
+void esp8266_getData();
+
+char ret[100];
+int prev, led2 = 0;
 void setup() {
+
+    char cmd[50];
+
     // Open serial communications and wait for port to open:
-    Serial.begin(9600);
+    Serial.begin(115200);
+    ESP8266.begin(115200);
     while (!Serial) {
         ; // wait for serial port to connect. Needed for native USB port only
     }
 
-    pinMode(13, OUTPUT);
-    digitalWrite(13,LOW);
+    esp8266_sendCmd("ATE0\r\n",500);
+    esp8266_sendCmd("AT\r\n",500);
+
+    sprintf( cmd, "AT+CWJAP=\"%s\",\"%s\"\r\n", SSID, SSID_PASS );
+    esp8266_sendCmd( cmd, 10000);
+
+    sprintf( cmd, "AT+CIPSTART=\"TCP\",\"%s\",%d\r\n", IP, PORT );
+    esp8266_sendCmd( cmd, 10000);
+
+    esp8266_sendData("3\n");
+
+    pinMode(LED1, OUTPUT);
+    pinMode(LED2, OUTPUT);
+    digitalWrite(LED1,HIGH);
+    digitalWrite(LED2,HIGH);
     prev  = analogRead(0);
 }
 
 #define HIT 0
 #define IDLE 1
+bool wifi_enable = 1, being_hit = 0;;
 void loop() { // run over and over
     
     static int state, counter;
-    int curr = analogRead(0);
+    static int sensing_counter = 0;
+    char cmd[50];
+    int i, curr = analogRead(0);
+    if(wifi_enable){
+        esp8266_getData();
+        // esp8266_sendData("p\n");
+
+        // Parse data from received string
+        for(i=0; ret[i]; i++){
+            if(ret[i]=='P'){
+                i+=5; break;
+            }
+        }
+        Serial.print("Get (");
+        Serial.print(i);
+        Serial.println(ret[i]);
+        // if(ret[i]=='0') 
+        if(ret[i]!='3' && ret[i]!='5') return;
+        else if(ret[i]=='5'){
+            wifi_enable = 0;
+            being_hit = 0;
+            sensing_counter = 0;
+            prev  = analogRead(0);
+            digitalWrite(LED1,HIGH);
+        }
+        else{
+            wifi_enable = 0;
+            being_hit = 0;
+            sensing_counter = 0;
+            prev  = analogRead(0);
+            digitalWrite(LED1,HIGH);
+        }
+        // Here should latch one data
+    }
+    // else if(sensing_counter>50){
+    else if(ESP8266.available()){
+        sprintf( cmd, "I'm hit = %d", being_hit);
+        esp8266_sendData(cmd);
+
+        // Parse data from received string
+        for(i=0; ret[i]; i++){
+            if(ret[i]=='P'){
+                i+=5; break;
+            }
+        }
+        Serial.print("Get (");
+        Serial.print(i);
+        Serial.println(ret[i]);
+        // if(ret[i]=='0') 
+        wifi_enable = 1;
+        return;
+    }
+
     Serial.print(prev);
     Serial.print(",");
     Serial.println(curr);
@@ -28,20 +117,23 @@ void loop() { // run over and over
             state = HIT;
 Serial.println("Change to hit");
             prev = curr;
-            digitalWrite(13,HIGH);
+            being_hit = 1;
+            // esp8266_sendData("I'm hit");
+            // wifi_enable = 1;
+            digitalWrite(LED1,LOW);
         }
         else{
 Serial.println("Count");
             counter++;
         }
-        // digitalWrite(13,HIGH);
+        // digitalWrite(LED1,LOW);
     }
     else if( prev-curr>30 ){
         if(counter>3){
             state = IDLE;
 Serial.println("Change to idle");
             prev = curr;
-            digitalWrite(13,LOW);
+            digitalWrite(LED1,HIGH);
         }
         else{
 Serial.println("Count");
@@ -53,6 +145,47 @@ Serial.println("Count");
         counter = 0;
     }
     else prev = curr;
+    sensing_counter++;
+    if(sensing_counter%5==0){
+        led2 = !led2;
+        digitalWrite(LED2,led2);
+    }
     delay(50);
 
+}
+
+void esp8266_sendCmd( char *str, int time_delay ){
+    Serial.print("\nSend: ");
+    Serial.println(str);
+    ESP8266.print(str);
+    Serial.print("Return: ");
+    delay(time_delay);
+    int i=0;
+    while( ESP8266.available() ){
+        char tmp = ESP8266.read();
+        Serial.print(tmp);
+        ret[i++] = tmp;
+    }
+    ret[i] = 0;
+    Serial.println();
+}
+
+void esp8266_sendData( char *str ){
+    char cmd[30];
+    sprintf(cmd, "AT+CIPSEND=%d\r\n", strlen(str));
+    esp8266_sendCmd(cmd,2000);
+    esp8266_sendCmd(str,2000);
+}
+
+void esp8266_getData(){
+    int i;
+    while( ESP8266.available()==0 );
+    Serial.print("Return: ");
+    delay(100);
+    while( ESP8266.available() ){
+        char tmp = ESP8266.read();
+        Serial.print(tmp);
+        ret[i++] = tmp;
+    }
+    Serial.println();
 }
