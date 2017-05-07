@@ -15,7 +15,7 @@
 Timer t, t_wifi;
 Timeout t_dura;
 char ret[15];
-bool wifi_enable = 1;
+bool wifi_enable = 1, moving = 0;
 
 Serial pc(USBTX, USBRX);
 Serial HC06(D1, D0);
@@ -91,6 +91,8 @@ void encoder_control() {
 void esp8266_sendCmd( char *str, int time_delay );
 void esp8266_sendData( char *str );
 void esp8266_recvCmd_blocking();
+void esp8266_getString( char *str, int *len, float time_delay );
+void esp8266_dumpString( char *str, int len );
 
 void disable_all(){
     power = 0;
@@ -163,7 +165,7 @@ int main()
                 pc.printf("parity error at %x(%d)\r\n", cmd, PARITY_SUM(cmd));
                 continue;
             }
-            pc.printf("(%x)(moving%d)", cmd, cmd & 0x10);
+            pc.printf("(%x)(moving%d)\r\n", cmd, cmd & 0x10);
 
             // Launch state
             if ( BIT5(cmd) ) {
@@ -179,19 +181,21 @@ int main()
                 rot_level = (rot_dir) ? (8 - (LAST_3BIT(cmd >> 1))) : ((LAST_3BIT(cmd >> 1)) + 1);
 
                 switch ( LAST_2BIT(cmd >> 6) ) {
-                case 2:
-                    servo_left  = (rot_dir) ? 100 : 6 * rot_level * rot_level;
-                    servo_right = (rot_dir) ? 6 * rot_level * rot_level : 100;
-                    encoder_counter_left = 0; encoder_counter_right = 0;
-                    HC06.putc(1);
-                    break;
-                case 1: servo_left = -200; servo_right = -200;
-                    encoder_counter_left = 0; encoder_counter_right = 0; 
-                    HC06.putc(1);
-                    break;
-                case 0: servo_left = 0; servo_right = 0;
+                    case 2:
+                        servo_left  = (rot_dir) ? 100 : 6 * rot_level * rot_level;
+                        servo_right = (rot_dir) ? 6 * rot_level * rot_level : 100;
+                        encoder_counter_left = 0; encoder_counter_right = 0;
+                        HC06.putc(1);
+                        break;
+                    case 1:
+                        servo_left = -200; servo_right = -200;
+                        encoder_counter_left = 0; encoder_counter_right = 0; 
+                        HC06.putc(1);
+                        break;
+                    case 0:
+                        servo_left = 0; servo_right = 0;
                         pc.printf("encoder = %d/%d\n", encoder_counter_left, encoder_counter_right);
-                    HC06.putc(1);
+                        HC06.putc(1);
                         break;
                 }
             }
@@ -199,11 +203,11 @@ int main()
             // Cannon base state
             else if ( BIT3(cmd) ) {
                 switch ( LAST_2BIT(cmd >> 6) ) {
-                case 2: ramp_cannon_base = 30;  break;
-                case 1: ramp_cannon_base = -30; break;
-                case 0: ramp_cannon_base = 0;   break;
+                    case 2: ramp_cannon_base = 30;  break;
+                    case 1: ramp_cannon_base = -30; break;
+                    case 0: ramp_cannon_base = 0;   break;
                 }
-                    HC06.putc(1);
+                HC06.putc(1);
             }
 
             // Cannon vertical state
@@ -234,24 +238,24 @@ int main()
                     i+=5; break;
                 }
             }
-            pc.printf("\r\nGet %c(%d) back\r\n", ret[i], ret[i]);
+            pc.printf("Get command %c(%d)\r\n", ret[i], ret[i]);
 
 
             // State controller
             switch(ret[i]){
                 case '1':
                     t_dura.attach(&disable_all, 10);
-                    pc.printf("Open power");
+                    pc.printf("Open power\r\n");
                     power = 1;
                     wifi_enable = 0;
                     moving = 1;
                     break;
                 case '2':
-                    pc.printf("close power");
+                    pc.printf("close power\r\n");
                     break;
                 case '4':
                     // t_dura.attach(&disable_all, 2);
-                    pc.printf("Open cannon");
+                    pc.printf("Open cannon\r\n");
                     laser = 1;
                     // wifi_enable = 0;
                     break;
@@ -261,6 +265,7 @@ int main()
 
             }
             t_wifi.reset();
+            pc.printf("----\r\n");
             sprintf( esp_cmd, "%c", ret[i]);
             esp8266_sendData( esp_cmd );
         }
@@ -269,36 +274,65 @@ int main()
     }
 }
 
+void esp8266_getString( char *str, int *len, float time_delay ){
+    int i;
+    char buf;
+    for( i=0, t.start(); t.read()<time_delay; ){
+        if(ESP8266.readable()){
+            buf = ESP8266.getc();
+            str[i++] = buf;
+        }
+        wait(.001);
+    }
+    t.stop();
+    t.reset();
+    str[i] = 0;
+    *len = i;
+}
+
+void esp8266_getString( char *str, int *len, float time_delay, char target ){
+    int i;
+    char buf;
+    for( i=0, t.start(); t.read()<time_delay; ){
+        if(ESP8266.readable()){
+            buf = ESP8266.getc();
+            str[i++] = buf;
+            if(buf==target) break;
+        }
+        wait(.001);
+    }
+    t.stop();
+    t.reset();
+    str[i] = 0;
+    *len = i;
+}
+
+void esp8266_getString( char *str, int *len, float time_delay, char* target ){
+}
+
+
+void esp8266_dumpString( char *str, int len ){
+    int j;
+    pc.printf("\r\nReturn(%d): ", len);
+    for(j=0; j<len; j++){
+        if(str[j]!='\r'&&str[j]!='\n') pc.printf("%c",str[j]);
+        else pc.printf("_");
+    }
+    pc.printf("\r\n----\r\n");
+}
+
 void esp8266_sendCmd( char *str, int time_delay ){
 
     int i=0, j=0;
-    pc.printf("\r\nSend: %s\r\n", str);
+    pc.printf("\r\nSend: %s", str);
     ESP8266.printf("%s",str);
-    pc.printf("Return: ");
+    // pc.printf("Return: ");
     
     // Get string from ESP8266
-    if(time_delay){
-        for( t.start(); t.read()<time_delay; ){
-            if(ESP8266.readable()){
-                char buf = ESP8266.getc();
-                ret[i++] = buf;
-                // if(buf!='\r'&&buf!='\n') pc.printf("%c(%d)", buf, buf);
-                // else pc.printf("_(%d)", buf);
-            }
-            wait(.001);
-        }
-        t.stop();
-        t.reset();
-        ret[i] = 0;
-    }
+    if(time_delay) esp8266_getString( ret, &i, time_delay );
 
     // Print out the received string
-    pc.printf("\r\nreturn(%d) = ", i);
-    for(j=0; j<i; j++){
-        if(ret[j]!='\r'&&ret[j]!='\n') pc.printf("%c",ret[j]);
-        else pc.printf("_");
-    }
-    pc.printf("|\r\n");
+    esp8266_dumpString( ret, i );
 }
 
 #define WIFI_CIPS_INTV 3
@@ -308,47 +342,24 @@ void esp8266_sendData( char *str ){
     char buf, cmd[30];
 
     // Send size about data
-    sprintf(cmd, "AT+CIPSEND=%d\r\n", strlen(str));
-    esp8266_sendCmd( cmd, WIFI_CIPS_INTV );
+    pc.printf("AT+CIPSEND=1\r\n");
+    ESP8266.printf("AT+CIPSEND=1\r\n");
+    esp8266_getString( ret, &i, WIFI_CIPS_INTV, '>' );
+    esp8266_dumpString( ret, i );
 
     // Send body about data
     pc.printf("Send char %c\r\n", str[0]);
     ESP8266.putc(str[0]);
-    pc.printf("Return: ");
-
-    // Get string from ESP8266
-    for( t.start(); t.read()<WIFI_CIPS_DATA; ){
-        if(ESP8266.readable()){
-            buf = ESP8266.getc();
-            ret[i++] = buf;
-        }
-        wait(.001);
-    }
-    ret[i] = 0;
-    t.stop();
-    t.reset();
-
-    // Print out the received string
-    pc.printf("\r\nreturn(%d) = ", i);
-    for(j=0; j<i; j++){
-        if(ret[j]!='\r'&&ret[j]!='\n') pc.printf("%c",ret[j]);
-        else pc.printf("_");
-    }
+    esp8266_getString( ret, &i, WIFI_CIPS_DATA );
+    esp8266_dumpString( ret, i );
 }
 
 void esp8266_recvCmd_blocking(){
-    int i;
+    int i,j;
     char buf;
+    pc.printf("\r\nBlocking receive: ");
     while(!ESP8266.readable());
-    for( t.start(); t.read()<(double).2; ){
-        if(ESP8266.readable()){
-            buf = ESP8266.getc();
-            ret[i++] = buf;
-        }
-        wait(.001);
-    }
-    ret[i] = 0;
-    t.stop();
-    t.reset();
-    printf("Blocking receive (%d): %s\r\n", i, ret);
+    esp8266_getString( ret, &i, .2 );
+
+    esp8266_dumpString( ret, i );
 }
