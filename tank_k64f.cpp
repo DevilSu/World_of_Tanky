@@ -21,9 +21,9 @@ Serial pc(USBTX, USBRX);
 Serial HC06(D1, D0);
 RawSerial ESP8266(D9, D7);
 
-PwmOut wheel_left(D11), wheel_right(D12), cannon_base(D13), cannon_vert(D10);
+PwmOut wheel_left(D13), wheel_right(D12), cannon_base(D11), cannon_vert(D10);
 DigitalIn encoder_left(D6), encoder_right(D5);
-DigitalOut laser(D8), power(D2);
+DigitalOut laser(D3), power(D2);
 
 // Inline function to set pwm value with transformation
 #define CENTER_LEFT     1500
@@ -90,6 +90,7 @@ void encoder_control() {
 #define PORT 5000
 void esp8266_sendCmd( char *str, int time_delay );
 void esp8266_sendData( char *str );
+void esp8266_recvCmd_blocking();
 
 void disable_all(){
     power = 0;
@@ -122,7 +123,7 @@ int main()
     esp8266_sendCmd( esp_cmd, 5);
     sprintf( esp_cmd, "AT+CIPSTART=\"TCP\",\"%s\",%d\r\n", IP, PORT );
     esp8266_sendCmd( esp_cmd, 5);
-    esp8266_sendData("2\n");
+    esp8266_sendData("2");
 
     // Define ISR for servo, encoder, cannon
     servo_control_ticker.attach(&servo_control, .3);
@@ -220,10 +221,11 @@ int main()
         else if( wifi_enable && t_wifi.read() > WIFI_PING_PERIOD ){
             
             // Send data to TCP server
-            esp8266_sendData("3");
+            esp8266_recvCmd_blocking();
+            // esp8266_sendData("3");
 
             // Parse data from received string
-            for(i=0; ; i++){
+            for(i=0; ret[i]; i++){
                 if(ret[i]=='P'){
                     i+=5; break;
                 }
@@ -233,20 +235,23 @@ int main()
 
             // State controller
             switch(ret[i]){
-                case '0':
+                case '1':
                     t_dura.attach(&disable_all, 10);
                     pc.printf("Open power");
                     power = 1;
                     wifi_enable = 0;
                     break;
-                case '1':
+                case '2':
                     pc.printf("close power");
                     break;
-                case '2':
-                    t_dura.attach(&disable_all, 2);
+                case '4':
+                    // t_dura.attach(&disable_all, 2);
                     pc.printf("Open cannon");
                     laser = 1;
-                    wifi_enable = 0;
+                    // wifi_enable = 0;
+                    break;
+                case '6':
+                    disable_all();
                     break;
 
             }
@@ -288,8 +293,8 @@ void esp8266_sendCmd( char *str, int time_delay ){
     pc.printf("|\r\n");
 }
 
-#define WIFI_CIPS_INTV .5
-#define WIFI_CIPS_DATA 1
+#define WIFI_CIPS_INTV 3
+#define WIFI_CIPS_DATA 3
 void esp8266_sendData( char *str ){
     int i=0, j=0;
     char buf, cmd[30];
@@ -320,4 +325,18 @@ void esp8266_sendData( char *str ){
         if(ret[j]!='\r'&&ret[j]!='\n') pc.printf("%c",ret[j]);
         else pc.printf("_");
     }
+}
+
+void esp8266_recvCmd_blocking(){
+    int i;
+    char buf;
+    while(!ESP8266.readable());
+    pc.printf("\r\n");
+    for( i=0; ESP8266.readable(); ){
+        buf = ESP8266.getc();
+        pc.printf("#%d: %c(%d)\r\n", i, buf, buf);
+        ret[i++] = buf;
+    }
+    ret[i] = 0;
+    printf("Blocking receive (%d): %s\r\n", i, ret);
 }

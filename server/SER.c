@@ -67,8 +67,12 @@ int main(int argc, char **argv)
 
 	for( state = STATE_NOTHIN;;)
 	{
+
+		// State updating
 		state_str = state + '0';
 		for(i=0; i<=maxi; i++){
+
+			// Update new-coming client
 			if(dev[i].new_comer && dev[i].fd>=0){
 				write(dev[i].fd, &state_str, 1);
 				printf("Send initial  state %d to dev[%d]\n", state_str-'0', i);
@@ -76,25 +80,29 @@ int main(int argc, char **argv)
 				dev[i].new_comer = 0;
 			}
 
+			// Update the other client
 			else if( dev[i].new_comer==0 && dev[i].state != state ){
 				dev[i].state = state;
-				switch(state){
-					case STATE_TRGTON:
-					case STATE_TRGTOF:
-						write(dev[i].fd, &state_str, 1);
-						printf("Send changing state %d to dev[%d]\n", state_str-'0', i);
+				switch(dev[i].id){
+					case 2:
+						if( state==STATE_MOVING || state==STATE_SCNLSR || state==STATE_NOTHIN ){
+							write(dev[i].fd, &state_str, 1);
+							printf("Send changing state %d(%c) to dev[%d]\n", state_str-'0', state_str, i);
+						}
 						break;
-					default: break;
+					case 3:
+						if( state==STATE_TRGTON || state==STATE_TRGTOF ){
+							write(dev[i].fd, &state_str, 1);
+							printf("Send changing state %d to dev[%d]\n", state_str-'0', i);
+						}
+						break;
 				}
 			}
 		}
 
+		// Read data from clients
 		rset=allset;
-printf("\nWaiting for communication\n");
 		nready=select(maxfd+1, &rset, NULL, NULL, NULL);
-
-
-
 		if(FD_ISSET(lisfd, &rset)) // new client connection
 		{
 			clilen=sizeof(cliaddr);
@@ -145,12 +153,15 @@ printf("\nWaiting for communication\n");
 					fputs(buf, stdout);
 					printf("\n");
 
-					if( 	dev[i].id==4){
+					// State master
+					if(	dev[i].id==4){
 						if(n==1) state = (state+1)%6;
 						else state = buf[0]-'0';
 						printf("state = %d\n", state);
 						continue;
 					}
+
+					// Data from other clients
 					switch(state){
 						case STATE_NOTHIN:
 							switch(dev[i].id){
