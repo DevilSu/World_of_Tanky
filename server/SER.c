@@ -208,69 +208,6 @@ int main(int argc, char **argv)
 							}
 							break;
 					}
-
-/*
-					// Tank
-					if(dev[i].id==2){
-						switch(state){
-							case STATE_NOTHIN: break; // Ignore tank's ping
-							case STATE_MOVING:
-								printf("Ping from tank #%d, return %c(%d)\n", i, state[0], state[0]);
-								printf("Enable tank #%d\n", i);
-								write(sockfd, state, 2);
-								break;
-							case STATE_ENDING:
-							case STATE_TRGTON:
-							case STATE_SCNLSR:
-							case STATE_TRGTOF:
-						}
-						switch(atoi(buf)){
-							case TNK_PING:
-								printf("Ping from tank, return %c(%d)\n", state[0], state[0]);
-								write(sockfd, state, 2);
-								break;
-						}
-						// write(sockfd, &state, 1);
-					}
-
-					// Target
-					else if(dev[i].id==3){
-						switch(atoi(buf)){
-							case TNK_PING:
-							default:
-								printf("Ping from tget, return %c(%d)\n", state[0], state[0]);
-								write(sockfd, state, 2);
-								break;
-						}
-						// write(sockfd, &state, 1);
-					}
-
-					// Game master
-					else if(dev[i].id==4){
-						write(sockfd, msg, strlen(msg));
-						switch(buf[0]){
-							case '0':
-								state[0] = SER_MOVE_Y + '0';
-								printf("state = MOVE\n");
-								break;
-							case '2':
-								state[0] = SER_SHOT_Y + '0';
-								printf("state = SHOT\n");
-								break;
-							default:
-								state[0] = SER_MOVE_N + '0';
-								printf("state = STAY\n");
-								break;
-						}
-						state[0] = buf[0];
-						printf("state = %c\n", state[0]);
-					}
-					else
-						write(sockfd, buf, n);
-					//---------------------
-					// game(dev[i]);
-					//---------------------
-*/
 				}
 				if(--nready<=0) break; // no more readable descriptors
 			}
