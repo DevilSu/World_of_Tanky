@@ -250,12 +250,14 @@ int main()
                     laser = 1;
                     // wifi_enable = 0;
                     break;
-                case '6':
+                case '0':
                     disable_all();
                     break;
 
             }
             t_wifi.reset();
+            sprintf( esp_cmd, "%c", ret[i]);
+            esp8266_sendData( esp_cmd );
         }
 
         wait(.05);
@@ -278,6 +280,7 @@ void esp8266_sendCmd( char *str, int time_delay ){
                 // if(buf!='\r'&&buf!='\n') pc.printf("%c(%d)", buf, buf);
                 // else pc.printf("_(%d)", buf);
             }
+            wait(.001);
         }
         t.stop();
         t.reset();
@@ -314,6 +317,7 @@ void esp8266_sendData( char *str ){
             buf = ESP8266.getc();
             ret[i++] = buf;
         }
+        wait(.001);
     }
     ret[i] = 0;
     t.stop();
@@ -331,12 +335,15 @@ void esp8266_recvCmd_blocking(){
     int i;
     char buf;
     while(!ESP8266.readable());
-    pc.printf("\r\n");
-    for( i=0; ESP8266.readable(); ){
-        buf = ESP8266.getc();
-        pc.printf("#%d: %c(%d)\r\n", i, buf, buf);
-        ret[i++] = buf;
+    for( t.start(); t.read()<(double).2; ){
+        if(ESP8266.readable()){
+            buf = ESP8266.getc();
+            ret[i++] = buf;
+        }
+        wait(.001);
     }
     ret[i] = 0;
+    t.stop();
+    t.reset();
     printf("Blocking receive (%d): %s\r\n", i, ret);
 }
