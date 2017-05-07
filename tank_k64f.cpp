@@ -217,6 +217,10 @@ int main()
             }
         }
 
+        else if( wifi_enable && moving ){
+            esp8266_sendData("k");
+            moving = 0;
+        }
         // Ping TCP server to get state of the tank
         else if( wifi_enable && t_wifi.read() > WIFI_PING_PERIOD ){
             
@@ -240,6 +244,7 @@ int main()
                     pc.printf("Open power");
                     power = 1;
                     wifi_enable = 0;
+                    moving = 1;
                     break;
                 case '2':
                     pc.printf("close power");

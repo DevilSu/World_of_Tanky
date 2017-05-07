@@ -30,6 +30,7 @@ int main(int argc, char **argv)
 	int len=sizeof(int);
 	socklen_t clilen;
 	struct sockaddr_in servaddr, cliaddr;
+	struct timeval select_tout;
 	char buf[MAXLINE], msg[MAXLINE];
 
 	strcpy(msg,"Server say hello\n");
@@ -67,7 +68,6 @@ int main(int argc, char **argv)
 
 	for( state = STATE_NOTHIN;;)
 	{
-
 		// State updating
 		state_str = state + '0';
 		for(i=0; i<=maxi; i++){
@@ -102,7 +102,9 @@ int main(int argc, char **argv)
 
 		// Read data from clients
 		rset=allset;
-		nready=select(maxfd+1, &rset, NULL, NULL, NULL);
+		select_tout.tv_sec = 1;
+		select_tout.tv_usec = 0;
+		nready=select(maxfd+1, &rset, NULL, NULL, &select_tout);
 		if(FD_ISSET(lisfd, &rset)) // new client connection
 		{
 			clilen=sizeof(cliaddr);
@@ -165,14 +167,16 @@ int main(int argc, char **argv)
 					switch(state){
 						case STATE_NOTHIN:
 							switch(dev[i].id){
-								case 2: // Ignore tank's ping
 								case 3: // Ignore target's ping
 									break;
 							}
 							break;
 						case STATE_MOVING:
 							switch(dev[i].id){
-								case 2:	// Identify tank to move ONCE
+								case 2:
+									// Ignore tank's ping
+									printf("INFO: Tank %s\n", buf);
+									break;
 								case 3: // Ignore target's ping
 									break;
 							}
