@@ -73,14 +73,7 @@ void loop() { // run over and over
         Serial.print(i);
         Serial.println(ret[i]);
         // if(ret[i]=='0') 
-        if(ret[i]!='3' && ret[i]!='5') return;
-        else if(ret[i]=='5'){
-            wifi_enable = 0;
-            being_hit = 0;
-            sensing_counter = 0;
-            prev  = analogRead(0);
-            digitalWrite(LED1,HIGH);
-        }
+        if(ret[i]!='3') return;
         else{
             wifi_enable = 0;
             being_hit = 0;
