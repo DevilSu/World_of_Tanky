@@ -76,38 +76,43 @@ int main(int argc, char **argv)
 			case STATE_NOTHIN:
 				if( cur_time - round_starting_time > 5 ){
 					state = STATE_MOVING;
+					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_MOVING\n");
 				}
 				break;
 			case STATE_MOVING:
-				if( cur_time - round_starting_time > 31 ){
+				if( cur_time - round_starting_time > 26 ){
 					state = STATE_ENDING;
+					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_ENDING\n");
 				}
 				break;
 			case STATE_ENDING:
-				if( cur_time - round_starting_time > 36 ){
+				if( cur_time - round_starting_time > 5 ){
 					state = STATE_TRGTON;
+					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTON\n");
 				}
 				break;
 			case STATE_TRGTON:
-				if( cur_time - round_starting_time > 44 ){
+				if( cur_time - round_starting_time > 8 ){
 					state = STATE_SCNLSR;
+					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_SCNLSR\n");
 				}
 				break;
 			case STATE_SCNLSR:
-				if( cur_time - round_starting_time > 52 ){
+				if( cur_time - round_starting_time > 8 ){
 					state = STATE_TRGTOF;
+					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTOF\n");
 				}
 				break;
 			case STATE_TRGTOF:
-				if( cur_time - round_starting_time > 60 ){
+				if( cur_time - round_starting_time > 8 ){
 					state = STATE_NOTHIN;
-					printf("\nstate change to STATE_NOTHIN\n");
 					round_starting_time = time(NULL);
+					printf("\nstate change to STATE_NOTHIN\n");
 				}
 				break;
 		}
