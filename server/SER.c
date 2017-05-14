@@ -32,6 +32,7 @@ int main(int argc, char **argv)
 	struct sockaddr_in servaddr, cliaddr;
 	struct timeval select_tout;
 	char buf[MAXLINE], msg[MAXLINE];
+	time_t round_starting_time, cur_time;
 
 	strcpy(msg,"Server say hello\n");
 	printf("msg = %s\n", msg);
@@ -66,9 +67,52 @@ int main(int argc, char **argv)
 		dev[i].new_comer = 0;
 	}
 
+	round_starting_time = time(NULL);
 	for( state = STATE_NOTHIN;;)
 	{
-		// State updating
+		// State updater
+		cur_time = time(NULL);
+		switch(state){
+			case STATE_NOTHIN:
+				if( cur_time - round_starting_time > 5 ){
+					state = STATE_MOVING;
+					printf("\nstate change to STATE_MOVING\n");
+				}
+				break;
+			case STATE_MOVING:
+				if( cur_time - round_starting_time > 31 ){
+					state = STATE_ENDING;
+					printf("\nstate change to STATE_ENDING\n");
+				}
+				break;
+			case STATE_ENDING:
+				if( cur_time - round_starting_time > 36 ){
+					state = STATE_TRGTON;
+					printf("\nstate change to STATE_TRGTON\n");
+				}
+				break;
+			case STATE_TRGTON:
+				if( cur_time - round_starting_time > 44 ){
+					state = STATE_SCNLSR;
+					printf("\nstate change to STATE_SCNLSR\n");
+				}
+				break;
+			case STATE_SCNLSR:
+				if( cur_time - round_starting_time > 52 ){
+					state = STATE_TRGTOF;
+					printf("\nstate change to STATE_TRGTOF\n");
+				}
+				break;
+			case STATE_TRGTOF:
+				if( cur_time - round_starting_time > 60 ){
+					state = STATE_NOTHIN;
+					printf("\nstate change to STATE_NOTHIN\n");
+					round_starting_time = time(NULL);
+				}
+				break;
+		}
+
+		// Client state updating
 		state_str = state + '0';
 		for(i=0; i<=maxi; i++){
 
