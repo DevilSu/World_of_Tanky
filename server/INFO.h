@@ -13,6 +13,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <sys/queue.h>
+
 // maximum number of devices
 #define NUM_OF_DEV 20
 
@@ -60,4 +62,11 @@ typedef struct device
 
 }DEVICE;
 
-// DEVICE dev[NUM_OF_DEV];
+SLIST_HEAD(slisthead, entry)\
+    trg_head = SLIST_HEAD_INITIALIZER(trg_head),\
+    tnk_head = SLIST_HEAD_INITIALIZER(tnk_head);
+struct slisthead *headp;
+struct entry {
+    SLIST_ENTRY(entry) entries;
+    struct device *ptr;
+} *n1, *n2, *n3, *np;

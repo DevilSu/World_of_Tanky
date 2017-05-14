@@ -20,6 +20,8 @@
 #define LISTENQ 1024
 #define MAXLINE 100
 
+DEVICE *tnk_list, *trg_list;
+
 int main(int argc, char **argv)
 {
 	// set up TCP server
@@ -62,6 +64,9 @@ int main(int argc, char **argv)
 
 	// set up device
 	DEVICE dev[NUM_OF_DEV];
+	struct entry *dev_ptr;
+    SLIST_INIT(&tnk_head);
+    SLIST_INIT(&trg_head);
 	for(i=0; i<NUM_OF_DEV; i++){
 		dev[i].fd=-1;
 		dev[i].new_comer = 0;
@@ -165,6 +170,8 @@ int main(int argc, char **argv)
 				{
 					dev[i].fd=confd; // save descriptor
 					dev[i].new_comer = 1;
+					dev_ptr = (struct entry*) malloc( sizeof(struct entry));
+					dev_ptr->ptr = &dev[i];
 					break;
 				}
 			}
@@ -176,7 +183,29 @@ int main(int argc, char **argv)
 			dev[i].id=atoi(buf);
 			dev[i].ip=cliaddr.sin_addr;
 			dev[i].port=cliaddr.sin_port;
+
+			switch(dev[i].id){
+				case TANK:
+					SLIST_INSERT_HEAD(&tnk_head, dev_ptr, entries);
+					break;
+				case TRGT:
+					SLIST_INSERT_HEAD(&trg_head, dev_ptr, entries);
+					break;
+			}
+
 			printf("id=%d, ip=%s, port=%d\n", dev[i].id, inet_ntoa(dev[i].ip), ntohs(dev[i].port));
+			printf("Tank list\n");
+			SLIST_FOREACH(np, &tnk_head, entries){
+				printf("Client = %d\n", np->ptr->fd);
+				printf("\t> id = %d\n", np->ptr->id);
+				printf("\t> id = %s\n", inet_ntoa(np->ptr->ip));
+			}
+			printf("Target list\n");
+			SLIST_FOREACH(np, &trg_head, entries){
+				printf("Client = %d\n", np->ptr->fd);
+				printf("\t> id = %d\n", np->ptr->id);
+				printf("\t> id = %s\n", inet_ntoa(np->ptr->ip));
+			}
 
 
 			FD_SET(confd, &allset); //add new descriptor to set
@@ -197,6 +226,25 @@ int main(int argc, char **argv)
 					close(sockfd);
 					FD_CLR(sockfd, &allset);
 					dev[i].fd=-1;
+					switch(dev[i].id){
+						case TANK:
+							SLIST_FOREACH(np, &tnk_head, entries){
+								if(np->ptr==&dev[i]){
+									SLIST_REMOVE(&tnk_head, np, entry, entries);
+									break;
+								}
+							}
+							break;
+						case TRGT:
+							SLIST_FOREACH(np, &trg_head, entries){
+								if(np->ptr==&dev[i]){
+									SLIST_REMOVE(&trg_head, np, entry, entries);
+									break;
+								}
+							}
+							break;
+					}
+
 				}
 				else
 				{
