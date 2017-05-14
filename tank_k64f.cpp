@@ -170,7 +170,7 @@ int main()
             // Launch state
             if ( BIT5(cmd) ) {
                 laser = 1;
-                wait(3);
+                wait(1);
                 laser = 0;
             }
             // Moving state
@@ -244,7 +244,7 @@ int main()
             // State controller
             switch(ret[i]){
                 case '1':
-                    t_dura.attach(&disable_all, 10);
+                    t_dura.attach(&disable_all, 20);
                     pc.printf("Open power\r\n");
                     power = 1;
                     wifi_enable = 0;
