@@ -46,6 +46,38 @@
 #define	STATE_SCNLSR 4
 #define STATE_TRGTOF 5
 
+struct tank_info{
+    int side, id;   // (side,id) is a bijection to each player
+    int state;
+    int connected;
+    int score;
+}
+
+struct trgt_info{   // (5,1,2) = RXXBB
+    int total, red, blue;
+}
+
+struct state_info{
+    int state;
+    int time_last;
+}
+
+struct popup_info{
+    char *msg;
+}
+
+struct log_info{
+    char *msg;
+}
+
+struct ui_info{
+    struct tank_info tank[2];
+    struct trgt_info target;
+    struct state_info state;
+    struct popup_info popup;
+    struct log_info log;
+} 
+
 typedef struct device
 {
 	// basic info
@@ -62,6 +94,7 @@ typedef struct device
 
 }DEVICE;
 
+
 SLIST_HEAD(slisthead, entry)\
     trg_head = SLIST_HEAD_INITIALIZER(trg_head),\
     tnk_head = SLIST_HEAD_INITIALIZER(tnk_head);
@@ -69,4 +102,4 @@ struct slisthead *headp;
 struct entry {
     SLIST_ENTRY(entry) entries;
     struct device *ptr;
-} *n1, *n2, *n3, *np;
+}*np;
