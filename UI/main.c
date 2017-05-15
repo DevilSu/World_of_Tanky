@@ -33,26 +33,22 @@ gtk_label_set_text(GTK_LABEL(g_lbl_r_score), "HHAHA");
     gtk_widget_show(window);
     g_timeout_add_seconds(1, update, g_lbl_r_score);
     gtk_main();
-
-    // int i;
-    // char buf[3];
-    // for(i=0; i<100; i++)
-    // {
-    //     sprintf(buf, "%3d", i);
-    //     gtk_label_set_text(GTK_LABEL(g_lbl_r_score), buf);
-    //     gtk_widget_show(g_lbl_r_score);
-    //     sleep(1);
-    // }
     return 0;
 }
 
 static gboolean update(gpointer data)
 {
     GtkLabel *label = (GtkLabel*)data;
+    GdkColor color;
     char buf[256];
     memset(buf, 0, 256);
     snprintf(buf, 255, "Time elapsed: %d secs", ++sec_expired);
     gtk_label_set_label(label, buf);
+    
+
+    if(sec_expired%2)gdk_color_parse ("red", &color);
+    else gdk_color_parse ("blue", &color);
+    gtk_widget_modify_bg(label, GTK_STATE_NORMAL, &color);
     return continue_timer;
 }
 
