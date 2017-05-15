@@ -36,10 +36,10 @@ int main(int argc, char **argv)
     builder = gtk_builder_new();
     gtk_builder_add_from_file(builder, "window_main.glade", NULL);
  
-    window = GTK_WIDGET(gtk_builder_get_object(builder, "window_main"));
-	g_lbl_hello = GTK_WIDGET(gtk_builder_get_object(builder, "lbl_hello"));
-	g_lbl_count = GTK_WIDGET(gtk_builder_get_object(builder, "lbl_count"));
-	g_lbl_r_score = GTK_WIDGET(gtk_builder_get_object(builder, "lbl_r_score"));
+    window 			= GTK_WIDGET( gtk_builder_get_object(builder, "window_main"));
+	g_lbl_hello 	= GTK_WIDGET( gtk_builder_get_object(builder, "lbl_hello"));
+	g_lbl_count 	= GTK_WIDGET( gtk_builder_get_object(builder, "lbl_count"));
+	g_lbl_r_score 	= GTK_WIDGET( gtk_builder_get_object(builder, "lbl_r_score"));
 	gtk_label_set_text(GTK_LABEL(g_lbl_r_score), "HHAHA");
     gtk_builder_connect_signals(builder, NULL);
  

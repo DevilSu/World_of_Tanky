@@ -47,28 +47,29 @@
 #define STATE_TRGTOF 5
 
 struct tank_info{
+    char name[30];
     int side, id;   // (side,id) is a bijection to each player
     int state;
     int connected;
     int score;
-}
+};
 
 struct trgt_info{   // (5,1,2) = RXXBB
     int total, red, blue;
-}
+};
 
 struct state_info{
     int state;
     int time_last;
-}
+};
 
 struct popup_info{
     char *msg;
-}
+};
 
 struct log_info{
     char *msg;
-}
+};
 
 struct ui_info{
     struct tank_info tank[2];
@@ -76,7 +77,7 @@ struct ui_info{
     struct state_info state;
     struct popup_info popup;
     struct log_info log;
-} 
+};
 
 typedef struct device
 {
