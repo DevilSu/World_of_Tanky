@@ -14,7 +14,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <gtk/gtk.h>
+
 #include "INFO.h"
+#include "myGTK.h"
 
 #define SERV_PORT 5000
 #define LISTENQ 1024
@@ -24,6 +27,28 @@ DEVICE *tnk_list, *trg_list;
 
 int main(int argc, char **argv)
 {
+	// set up GTK
+	GtkBuilder      *builder; 
+    GtkWidget       *window;
+ 
+    gtk_init(&argc, &argv);
+ 
+    builder = gtk_builder_new();
+    gtk_builder_add_from_file(builder, "window_main.glade", NULL);
+ 
+    window = GTK_WIDGET(gtk_builder_get_object(builder, "window_main"));
+	g_lbl_hello = GTK_WIDGET(gtk_builder_get_object(builder, "lbl_hello"));
+	g_lbl_count = GTK_WIDGET(gtk_builder_get_object(builder, "lbl_count"));
+	g_lbl_r_score = GTK_WIDGET(gtk_builder_get_object(builder, "lbl_r_score"));
+	gtk_label_set_text(GTK_LABEL(g_lbl_r_score), "HHAHA");
+    gtk_builder_connect_signals(builder, NULL);
+ 
+    g_object_unref(builder);
+ 
+    gtk_widget_show(window);
+    g_timeout_add_seconds(1, update, g_lbl_r_score);
+    gtk_main();
+
 	// set up TCP server
 	int state;
 	char state_str;
