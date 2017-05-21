@@ -12,6 +12,7 @@ static gboolean update(gpointer data);
 static gboolean gtk_state_update(gpointer data);
 
 extern char gbl_state[];
+extern int gbl_state_time;
 extern int gbl_player_num, gbl_player_info;
 extern int gbl_target_num, gbl_target_info;
 static void *gtk_thread(void *arg)
@@ -57,7 +58,7 @@ static gboolean gtk_state_update(gpointer data)
     GtkLabel *label = (GtkLabel*)data;
     char buf[256];
     memset(buf, 0, 256);
-    snprintf(buf, 255, "%s", gbl_state);
+    snprintf(buf, 255, "%s(%-2d)", gbl_state, gbl_state_time);
     gtk_label_set_label(label, buf);
     return continue_timer;
 }

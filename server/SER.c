@@ -28,6 +28,7 @@ DEVICE *tnk_list, *trg_list;
 static void *gtk_thread(void *arg);
 
 char gbl_state[30] = "Game start";
+int gbl_state_time;
 int gbl_player_num, gbl_player_info;
 int gbl_target_num, gbl_target_info;
 
@@ -99,6 +100,7 @@ int main(int argc, char **argv)
 					printf("\nstate change to STATE_MOVING\n");
 					strcpy(gbl_state,"STATE_MOVING");
 				}
+				gbl_state_time = round_starting_time - cur_time + 5;
 				break;
 			case STATE_MOVING:
 				if( cur_time - round_starting_time > 26 ){
@@ -107,6 +109,7 @@ int main(int argc, char **argv)
 					printf("\nstate change to STATE_ENDING\n");
 					strcpy(gbl_state,"STATE_ENDING");
 				}
+				gbl_state_time = round_starting_time - cur_time + 26;
 				break;
 			case STATE_ENDING:
 				if( cur_time - round_starting_time > 5 ){
@@ -115,6 +118,7 @@ int main(int argc, char **argv)
 					printf("\nstate change to STATE_TRGTON\n");
 					strcpy(gbl_state,"STATE_TRGTON");
 				}
+				gbl_state_time = round_starting_time - cur_time + 5;
 				break;
 			case STATE_TRGTON:
 				if( cur_time - round_starting_time > 8 ){
@@ -123,6 +127,7 @@ int main(int argc, char **argv)
 					printf("\nstate change to STATE_SCNLSR\n");
 					strcpy(gbl_state,"STATE_SCNLSR");
 				}
+				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
 			case STATE_SCNLSR:
 				if( cur_time - round_starting_time > 8 ){
@@ -131,6 +136,7 @@ int main(int argc, char **argv)
 					printf("\nstate change to STATE_TRGTOF\n");
 					strcpy(gbl_state,"STATE_TRGTOF");
 				}
+				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
 			case STATE_TRGTOF:
 				if( cur_time - round_starting_time > 8 ){
@@ -139,6 +145,7 @@ int main(int argc, char **argv)
 					printf("\nstate change to STATE_NOTHIN\n");
 					strcpy(gbl_state,"STATE_NOTHIN");
 				}
+				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
 		}
 
