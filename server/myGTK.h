@@ -8,7 +8,9 @@ GtkWidget *g_lbl_count;
 GtkWidget *g_lbl_r_score;
 
 static gboolean update(gpointer data);
+static gboolean gtk_state_update(gpointer data);
 
+extern char gbl_state[];
 static void *gtk_thread(void *arg)
 {
     GtkBuilder      *builder; 
@@ -30,6 +32,7 @@ static void *gtk_thread(void *arg)
  
     gtk_widget_show(window);
     g_timeout_add_seconds(1, update, g_lbl_r_score);
+    g_timeout_add_seconds(1, gtk_state_update, g_lbl_hello);
     gtk_main();
 }
 
@@ -39,6 +42,16 @@ static gboolean update(gpointer data)
     char buf[256];
     memset(buf, 0, 256);
     snprintf(buf, 255, "Time elapsed: %d secs", ++sec_expired);
+    gtk_label_set_label(label, buf);
+    return continue_timer;
+}
+
+static gboolean gtk_state_update(gpointer data)
+{
+    GtkLabel *label = (GtkLabel*)data;
+    char buf[256];
+    memset(buf, 0, 256);
+    snprintf(buf, 255, "%s", gbl_state);
     gtk_label_set_label(label, buf);
     return continue_timer;
 }

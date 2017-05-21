@@ -27,6 +27,8 @@ DEVICE *tnk_list, *trg_list;
 
 static void *gtk_thread(void *arg);
 
+char gbl_state[30] = "Game start";
+
 int main(int argc, char **argv)
 {
 	// set up GTK
@@ -93,6 +95,7 @@ int main(int argc, char **argv)
 					state = STATE_MOVING;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_MOVING\n");
+					strcpy(gbl_state,"STATE_MOVING");
 				}
 				break;
 			case STATE_MOVING:
@@ -100,6 +103,7 @@ int main(int argc, char **argv)
 					state = STATE_ENDING;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_ENDING\n");
+					strcpy(gbl_state,"STATE_ENDING");
 				}
 				break;
 			case STATE_ENDING:
@@ -107,6 +111,7 @@ int main(int argc, char **argv)
 					state = STATE_TRGTON;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTON\n");
+					strcpy(gbl_state,"STATE_TRGTON");
 				}
 				break;
 			case STATE_TRGTON:
@@ -114,6 +119,7 @@ int main(int argc, char **argv)
 					state = STATE_SCNLSR;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_SCNLSR\n");
+					strcpy(gbl_state,"STATE_SCNLSR");
 				}
 				break;
 			case STATE_SCNLSR:
@@ -121,6 +127,7 @@ int main(int argc, char **argv)
 					state = STATE_TRGTOF;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTOF\n");
+					strcpy(gbl_state,"STATE_TRGTOF");
 				}
 				break;
 			case STATE_TRGTOF:
@@ -128,6 +135,7 @@ int main(int argc, char **argv)
 					state = STATE_NOTHIN;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_NOTHIN\n");
+					strcpy(gbl_state,"STATE_NOTHIN");
 				}
 				break;
 		}
