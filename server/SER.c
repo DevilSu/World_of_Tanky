@@ -28,6 +28,8 @@ DEVICE *tnk_list, *trg_list;
 static void *gtk_thread(void *arg);
 
 char gbl_state[30] = "Game start";
+int gbl_player_num, gbl_player_info;
+int gbl_target_num, gbl_target_info;
 
 int main(int argc, char **argv)
 {
@@ -205,9 +207,15 @@ int main(int argc, char **argv)
 			switch(dev[i].id){
 				case TANK:
 					SLIST_INSERT_HEAD(&tnk_head, dev_ptr, entries);
+					gbl_player_num = 1;
+					gbl_player_info = UI_PLAYER_REGISTER;
+					gtk_player_update(g_lbl_player);
 					break;
 				case TRGT:
 					SLIST_INSERT_HEAD(&trg_head, dev_ptr, entries);
+					gbl_target_num = 1;
+					gbl_target_info = UI_TARGET_REGISTER;
+					gtk_target_update(g_lbl_target);
 					break;
 			}
 

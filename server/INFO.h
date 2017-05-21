@@ -104,3 +104,8 @@ struct entry {
     SLIST_ENTRY(entry) entries;
     struct device *ptr;
 }*np;
+
+#define UI_PLAYER_UNDEFINED -1
+#define UI_PLAYER_REGISTER  0
+#define UI_TARGET_UNDEFINED -1
+#define UI_TARGET_REGISTER  0
