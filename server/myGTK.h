@@ -8,12 +8,14 @@ GtkWidget *g_lbl_count;
 GtkWidget *g_lbl_player;
 GtkWidget *g_lbl_player_info;
 GtkWidget *g_lbl_target;
+GtkWidget *g_lbl_target_info;
 
 static gboolean update(gpointer data);
 static gboolean gtk_state_update(gpointer data);
 
 extern char gbl_state[];
 extern char gbl_player_status[];
+extern char gbl_target_status[];
 extern int gbl_state_time;
 extern int gbl_player_num, gbl_player_info;
 extern int gbl_target_num, gbl_target_info;
@@ -33,6 +35,7 @@ static void *gtk_thread(void *arg)
     g_lbl_player    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_player_00"));
     g_lbl_player_info    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_player_status_00"));
     g_lbl_target    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_target_0"));
+    g_lbl_target_info    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_target_status_0"));
 
     gtk_label_set_text(GTK_LABEL(g_lbl_player), "No player");
     gtk_label_set_text(GTK_LABEL(g_lbl_target), "No target");
@@ -88,6 +91,17 @@ static gboolean gtk_player_info_update(gpointer data)
     memset(buf, 0, 256);
 
     snprintf(buf, 255, "%s", gbl_player_status);
+    gtk_label_set_label(label, buf);
+    return continue_timer;
+}
+
+static gboolean gtk_target_info_update(gpointer data)
+{
+    GtkLabel *label = (GtkLabel*)data;
+    char buf[256];
+    memset(buf, 0, 256);
+
+    snprintf(buf, 255, "%s", gbl_target_status);
     gtk_label_set_label(label, buf);
     return continue_timer;
 }

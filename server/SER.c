@@ -29,6 +29,7 @@ static void *gtk_thread(void *arg);
 
 char gbl_state[30] = "Game start";
 char gbl_player_status[30];
+char gbl_target_status[30];
 int gbl_state_time;
 int gbl_player_num, gbl_player_info;
 int gbl_target_num, gbl_target_info;
@@ -120,6 +121,8 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTON\n");
 					strcpy(gbl_state,"STATE_TRGTON");
+					strcpy(gbl_target_status,"Scanning");
+					gtk_target_info_update(g_lbl_target_info);
 				}
 				gbl_state_time = round_starting_time - cur_time + 5;
 				break;
@@ -147,6 +150,8 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_NOTHIN\n");
 					strcpy(gbl_state,"STATE_NOTHIN");
+					strcpy(gbl_target_status,"Idle");
+					gtk_target_info_update(g_lbl_target_info);
 				}
 				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
@@ -351,6 +356,19 @@ int main(int argc, char **argv)
 							switch(dev[i].id){
 								case 3: // Ignore target's ping
 									printf("INFO: %s\n", buf);
+									switch(atoi(buf)){
+										case 1:
+											strcpy(gbl_target_status,"Hit");
+											break;
+										case 0:
+											strcpy(gbl_target_status,"Save");
+											break;
+										default:
+											strcpy(gbl_target_status,"Error!");
+											break;
+									}
+									gtk_target_info_update(g_lbl_target_info);
+
 									break;
 								case 2:	// Identify tank ONCE
 									break;

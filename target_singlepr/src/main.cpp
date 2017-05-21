@@ -85,7 +85,7 @@ void loop() { // run over and over
     }
     // else if(sensing_counter>50){
     else if(ESP8266.available()){
-        sprintf( cmd, "I'm hit = %d", being_hit);
+        sprintf( cmd, "%d", being_hit);
         esp8266_sendData(cmd);
 
         // Parse data from received string
