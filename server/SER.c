@@ -28,6 +28,7 @@ DEVICE *tnk_list, *trg_list;
 static void *gtk_thread(void *arg);
 
 char gbl_state[30] = "Game start";
+char gbl_player_status[30];
 int gbl_state_time;
 int gbl_player_num, gbl_player_info;
 int gbl_target_num, gbl_target_info;
@@ -108,6 +109,8 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_ENDING\n");
 					strcpy(gbl_state,"STATE_ENDING");
+					strcpy(gbl_player_status,"Idle");
+					gtk_player_info_update(g_lbl_player_info);
 				}
 				gbl_state_time = round_starting_time - cur_time + 26;
 				break;
@@ -306,6 +309,18 @@ int main(int argc, char **argv)
 								case 2:
 									// Ignore tank's ping
 									printf("INFO: Tank %s\n", buf);
+									switch(buf[0]){
+										case STATE_MOVING+'0':
+											strcpy(gbl_player_status,"Moving");
+											break;
+										case 'k':
+											strcpy(gbl_player_status,"Finish");
+											break;
+										default:
+											strcpy(gbl_player_status,"Error!");
+											break;
+									}
+									gtk_player_info_update(g_lbl_player_info);
 									break;
 								case 3: // Ignore target's ping
 									break;
