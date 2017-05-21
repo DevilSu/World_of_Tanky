@@ -6,7 +6,7 @@
 #define SSID_PASS "eecslab822"
 
 // TCP server information
-#define IP "192.168.0.197"
+#define IP "192.168.0.206"
 #define PORT 5000
 
 #define LED1 7
