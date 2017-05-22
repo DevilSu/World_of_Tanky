@@ -27,6 +27,7 @@ DEVICE *tnk_list, *trg_list;
 
 static void *gtk_thread(void *arg);
 
+char gbl_game_start = 0;
 char gbl_state[30] = "Game start";
 char gbl_player_status[30];
 char gbl_target_status[30];
@@ -94,6 +95,9 @@ int main(int argc, char **argv)
 	{
 		// State updater
 		cur_time = time(NULL);
+		if(!gbl_game_start){
+			round_starting_time = cur_time;
+		}
 		switch(state){
 			case STATE_NOTHIN:
 				if( cur_time - round_starting_time > 5 ){

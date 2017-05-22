@@ -3,7 +3,8 @@
 static gboolean continue_timer = TRUE;
 int sec_expired=0;
 
-GtkWidget *g_lbl_hello;
+GtkWidget *g_lbl_state;
+GtkWidget *g_lbl_timer;
 GtkWidget *g_lbl_count;
 GtkWidget *g_lbl_player;
 GtkWidget *g_lbl_player_info;
@@ -12,7 +13,9 @@ GtkWidget *g_lbl_target_info;
 
 static gboolean update(gpointer data);
 static gboolean gtk_state_update(gpointer data);
+static gboolean gtk_timer_update(gpointer data);
 
+extern char gbl_game_start;
 extern char gbl_state[];
 extern char gbl_player_status[];
 extern char gbl_target_status[];
@@ -30,7 +33,8 @@ static void *gtk_thread(void *arg)
     gtk_builder_add_from_file(builder, "window_main.glade", NULL);
  
     window          = GTK_WIDGET( gtk_builder_get_object(builder, "window_main"));
-    g_lbl_hello     = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_hello"));
+    g_lbl_state     = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_state"));
+    g_lbl_timer     = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_timer"));
     g_lbl_count     = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_count"));
     g_lbl_player    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_player_00"));
     g_lbl_player_info    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_player_status_00"));
@@ -45,8 +49,14 @@ static void *gtk_thread(void *arg)
  
     gtk_widget_show(window);
     // g_timeout_add_seconds(1, update, g_lbl_player);
-    g_timeout_add_seconds(1, gtk_state_update, g_lbl_hello);
+    g_timeout_add_seconds(1, gtk_state_update, g_lbl_state);
+    g_timeout_add_seconds(1, gtk_timer_update, g_lbl_timer);
     gtk_main();
+}
+
+void on_btn_start_clicked(){
+    gbl_game_start = 1;
+    return;
 }
 
 static gboolean update(gpointer data)
@@ -64,7 +74,17 @@ static gboolean gtk_state_update(gpointer data)
     GtkLabel *label = (GtkLabel*)data;
     char buf[256];
     memset(buf, 0, 256);
-    snprintf(buf, 255, "%s(%-2d)", gbl_state, gbl_state_time);
+    snprintf(buf, 255, "%s", gbl_state);
+    gtk_label_set_label(label, buf);
+    return continue_timer;
+}
+
+static gboolean gtk_timer_update(gpointer data)
+{
+    GtkLabel *label = (GtkLabel*)data;
+    char buf[256];
+    memset(buf, 0, 256);
+    snprintf(buf, 255, "%-2d", gbl_state_time);
     gtk_label_set_label(label, buf);
     return continue_timer;
 }
@@ -126,7 +146,7 @@ void on_btn_hello_clicked()
     static unsigned int count = 0;
     char str_count[30] = {0};
     
-    gtk_label_set_text(GTK_LABEL(g_lbl_hello), "Hello, world!");
+    gtk_label_set_text(GTK_LABEL(g_lbl_state), "Hello, world!");
     count++;
     sprintf(str_count, "%d", count);
     gtk_label_set_text(GTK_LABEL(g_lbl_count), str_count);
