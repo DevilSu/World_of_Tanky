@@ -14,6 +14,10 @@ GtkWidget *g_lbl_target_info;
 static gboolean update(gpointer data);
 static gboolean gtk_state_update(gpointer data);
 static gboolean gtk_timer_update(gpointer data);
+static gboolean gtk_player_info_update(gpointer data);
+static gboolean gtk_target_info_update(gpointer data);
+static gboolean gtk_player_update(gpointer data);
+static gboolean gtk_target_update(gpointer data);
 
 extern char gbl_game_start;
 extern char gbl_state[];
@@ -51,6 +55,11 @@ static void *gtk_thread(void *arg)
     // g_timeout_add_seconds(1, update, g_lbl_player);
     g_timeout_add_seconds(1, gtk_state_update, g_lbl_state);
     g_timeout_add_seconds(1, gtk_timer_update, g_lbl_timer);
+    g_timeout_add_seconds(1, gtk_player_info_update, g_lbl_player_info);
+    g_timeout_add_seconds(1, gtk_target_info_update, g_lbl_target_info);
+    g_timeout_add_seconds(1, gtk_player_update, g_lbl_player);
+    g_timeout_add_seconds(1, gtk_target_update, g_lbl_target);
+
     gtk_main();
 }
 

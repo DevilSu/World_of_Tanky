@@ -115,7 +115,6 @@ int main(int argc, char **argv)
 					printf("\nstate change to STATE_ENDING\n");
 					strcpy(gbl_state,"STATE_ENDING");
 					strcpy(gbl_player_status,"Idle");
-					gtk_player_info_update(g_lbl_player_info);
 				}
 				gbl_state_time = round_starting_time - cur_time + 26;
 				break;
@@ -126,7 +125,6 @@ int main(int argc, char **argv)
 					printf("\nstate change to STATE_TRGTON\n");
 					strcpy(gbl_state,"STATE_TRGTON");
 					strcpy(gbl_target_status,"Scanning");
-					gtk_target_info_update(g_lbl_target_info);
 				}
 				gbl_state_time = round_starting_time - cur_time + 5;
 				break;
@@ -155,7 +153,6 @@ int main(int argc, char **argv)
 					printf("\nstate change to STATE_NOTHIN\n");
 					strcpy(gbl_state,"STATE_NOTHIN");
 					strcpy(gbl_target_status,"Idle");
-					gtk_target_info_update(g_lbl_target_info);
 				}
 				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
@@ -228,13 +225,11 @@ int main(int argc, char **argv)
 					SLIST_INSERT_HEAD(&tnk_head, dev_ptr, entries);
 					gbl_player_num = 1;
 					gbl_player_info = UI_PLAYER_REGISTER;
-					gtk_player_update(g_lbl_player);
 					break;
 				case TRGT:
 					SLIST_INSERT_HEAD(&trg_head, dev_ptr, entries);
 					gbl_target_num = 1;
 					gbl_target_info = UI_TARGET_REGISTER;
-					gtk_target_update(g_lbl_target);
 					break;
 			}
 
@@ -329,7 +324,6 @@ int main(int argc, char **argv)
 											strcpy(gbl_player_status,"Error!");
 											break;
 									}
-									gtk_player_info_update(g_lbl_player_info);
 									break;
 								case 3: // Ignore target's ping
 									break;
@@ -371,7 +365,6 @@ int main(int argc, char **argv)
 											strcpy(gbl_target_status,"Error!");
 											break;
 									}
-									gtk_target_info_update(g_lbl_target_info);
 
 									break;
 								case 2:	// Identify tank ONCE
