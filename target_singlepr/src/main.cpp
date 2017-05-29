@@ -27,7 +27,7 @@ void setup() {
 
     // Open serial communications and wait for port to open:
     Serial.begin(115200);
-    ESP8266.begin(115200);
+    ESP8266.begin(9600);
     while (!Serial) {
         ; // wait for serial port to connect. Needed for native USB port only
     }
@@ -59,6 +59,8 @@ void loop() { // run over and over
     static int sensing_counter = 0;
     char cmd[50];
     int i, curr = analogRead(0);
+
+    // Blocking receive, waiting starting signal from Wifi.
     if(wifi_enable){
         esp8266_getData();
         // esp8266_sendData("p\n");
@@ -83,7 +85,8 @@ void loop() { // run over and over
         }
         // Here should latch one data
     }
-    // else if(sensing_counter>50){
+
+    // There is data input from Wifi. Send the result and switch to waiting mode.
     else if(ESP8266.available()){
         sprintf( cmd, "%d", being_hit);
         esp8266_sendData(cmd);
@@ -105,6 +108,7 @@ void loop() { // run over and over
     Serial.print(prev);
     Serial.print(",");
     Serial.println(curr);
+    // Difference over threshold, enable counter.
     if(curr-prev>30){
         if(counter>3){
             state = HIT;
@@ -133,18 +137,21 @@ Serial.println("Count");
             counter++;
         }
     }
+    // Difference under threshold, reset the counter.
     else if (counter){
         prev = curr;
         counter = 0;
     }
     else prev = curr;
+
+    // Toggle the sensing counter
     sensing_counter++;
     if(sensing_counter%5==0){
         led2 = !led2;
         digitalWrite(LED2,led2);
     }
-    delay(50);
 
+    delay(50);
 }
 
 void esp8266_sendCmd( char *str, int time_delay ){
