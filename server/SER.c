@@ -1,3 +1,4 @@
+//gcc -o SER SER.c INFO.h myGTK.h -Wall `pkg-config --cflags --libs gtk+-3.0` -export-dynamic
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,7 +47,7 @@ int main(int argc, char **argv)
 	int state;
 	char state_str;
 	int lisfd, confd, sockfd;
-	int flag=1, stat;
+	int flag=1;
 	int len=sizeof(int);
 	socklen_t clilen;
 	struct sockaddr_in servaddr, cliaddr;
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
 	printf("msg = %s\n", msg);
 
 	lisfd=socket(AF_INET, SOCK_STREAM, 0);
-	stat=setsockopt(lisfd, SOL_SOCKET, SO_REUSEADDR, &flag, len);
+	setsockopt(lisfd, SOL_SOCKET, SO_REUSEADDR, &flag, len);
 
 	bzero(&servaddr, sizeof(servaddr));
 
