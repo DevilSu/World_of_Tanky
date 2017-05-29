@@ -30,8 +30,10 @@ static void *gtk_thread(void *arg);
 
 char gbl_game_start = 0;
 char gbl_state[30] = "Game start";
-char gbl_player_status[30];
-char gbl_target_status[30];
+char gbl_player[2][1][30];
+char gbl_player_status[2][1][30];
+char gbl_target[7][30];
+char gbl_target_status[7][30];
 int gbl_state_time;
 int gbl_player_num, gbl_player_info;
 int gbl_target_num, gbl_target_info;
@@ -71,7 +73,7 @@ int main(int argc, char **argv)
 	listen(lisfd, LISTENQ);
 
 	// set up select function
-	int i, maxi, maxfd;
+	int i, j, maxi, maxfd;
 	int nready;
 	ssize_t n;
 	fd_set rset, allset;
@@ -91,6 +93,16 @@ int main(int argc, char **argv)
 		dev[i].new_comer = 0;
 	}
 
+	for( i=0; i<2; i++){
+		for( j=0; j<1; j++ ){
+			strcpy(gbl_player[i][j], "a");
+			strcpy(gbl_player_status[i][j], "a");
+		}
+	}
+	for( i=0; i<7; i++ ){
+		strcpy(gbl_target[i], "a");
+		strcpy(gbl_target_status[i], "a");
+	}
 	round_starting_time = time(NULL);
 	for( state = STATE_NOTHIN;;)
 	{
@@ -115,7 +127,7 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_ENDING\n");
 					strcpy(gbl_state,"STATE_ENDING");
-					strcpy(gbl_player_status,"Idle");
+					strcpy(gbl_player_status[1][0],"Idle");
 				}
 				gbl_state_time = round_starting_time - cur_time + 26;
 				break;
@@ -125,7 +137,7 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTON\n");
 					strcpy(gbl_state,"STATE_TRGTON");
-					strcpy(gbl_target_status,"Scanning");
+					strcpy(gbl_target_status[2],"Scanning");
 				}
 				gbl_state_time = round_starting_time - cur_time + 5;
 				break;
@@ -153,7 +165,7 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_NOTHIN\n");
 					strcpy(gbl_state,"STATE_NOTHIN");
-					strcpy(gbl_target_status,"Idle");
+					strcpy(gbl_target_status[2],"Idle");
 				}
 				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
@@ -316,13 +328,13 @@ int main(int argc, char **argv)
 									printf("INFO: Tank %s\n", buf);
 									switch(buf[0]){
 										case STATE_MOVING+'0':
-											strcpy(gbl_player_status,"Moving");
+											strcpy(gbl_player_status[1][0],"Moving");
 											break;
 										case 'k':
-											strcpy(gbl_player_status,"Finish");
+											strcpy(gbl_player_status[1][0],"Finish");
 											break;
 										default:
-											strcpy(gbl_player_status,"Error!");
+											strcpy(gbl_player_status[1][0],"Error!");
 											break;
 									}
 									break;
@@ -357,13 +369,13 @@ int main(int argc, char **argv)
 									printf("INFO: %s\n", buf);
 									switch(atoi(buf)){
 										case 1:
-											strcpy(gbl_target_status,"Hit");
+											strcpy(gbl_target_status[2],"Hit");
 											break;
 										case 0:
-											strcpy(gbl_target_status,"Save");
+											strcpy(gbl_target_status[2],"Save");
 											break;
 										default:
-											strcpy(gbl_target_status,"Error!");
+											strcpy(gbl_target_status[2],"Error!");
 											break;
 									}
 
