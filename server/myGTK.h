@@ -1,4 +1,10 @@
+#include <string.h>
 #include <gtk/gtk.h>
+
+#define UI_PLAYER_UNDEFINED -1
+#define UI_PLAYER_REGISTER  0
+#define UI_TARGET_UNDEFINED -1
+#define UI_TARGET_REGISTER  0
 
 static gboolean continue_timer = TRUE;
 int sec_expired=0;
@@ -11,7 +17,7 @@ GtkWidget *g_lbl_player_info;
 GtkWidget *g_lbl_target;
 GtkWidget *g_lbl_target_info;
 
-static gboolean update(gpointer data);
+// static gboolean update(gpointer data);
 static gboolean gtk_state_update(gpointer data);
 static gboolean gtk_timer_update(gpointer data);
 static gboolean gtk_player_info_update(gpointer data);
@@ -26,6 +32,7 @@ extern char gbl_target_status[];
 extern int gbl_state_time;
 extern int gbl_player_num, gbl_player_info;
 extern int gbl_target_num, gbl_target_info;
+
 static void *gtk_thread(void *arg)
 {
     GtkBuilder      *builder; 
@@ -61,6 +68,7 @@ static void *gtk_thread(void *arg)
     g_timeout_add_seconds(1, gtk_target_update, g_lbl_target);
 
     gtk_main();
+    return(NULL);
 }
 
 void on_btn_start_clicked(){
@@ -68,15 +76,15 @@ void on_btn_start_clicked(){
     return;
 }
 
-static gboolean update(gpointer data)
-{
-    GtkLabel *label = (GtkLabel*)data;
-    char buf[256];
-    memset(buf, 0, 256);
-    snprintf(buf, 255, "Time elapsed: %d secs", ++sec_expired);
-    gtk_label_set_label(label, buf);
-    return continue_timer;
-}
+// static gboolean update(gpointer data)
+// {
+//     GtkLabel *label = (GtkLabel*)data;
+//     char buf[256];
+//     memset(buf, 0, 256);
+//     snprintf(buf, 255, "Time elapsed: %d secs", ++sec_expired);
+//     gtk_label_set_label(label, buf);
+//     return continue_timer;
+// }
 
 static gboolean gtk_state_update(gpointer data)
 {
