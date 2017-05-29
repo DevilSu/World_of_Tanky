@@ -6,13 +6,14 @@
 #define UI_TARGET_UNDEFINED -1
 #define UI_TARGET_REGISTER  0
 
+#define GTK_NUM_PLAYER_EACH_TEM 1
 static gboolean continue_timer = TRUE;
 int sec_expired=0;
 
 GtkWidget *g_lbl_state;
 GtkWidget *g_lbl_timer;
 GtkWidget *g_lbl_count;
-GtkWidget *g_lbl_player;
+GtkWidget *g_lbl_player[2][GTK_NUM_PLAYER_EACH_TEM];
 GtkWidget *g_lbl_player_info;
 GtkWidget *g_lbl_target;
 GtkWidget *g_lbl_target_info;
@@ -35,6 +36,8 @@ extern int gbl_target_num, gbl_target_info;
 
 static void *gtk_thread(void *arg)
 {
+    int i,j;
+    char label_name[50];
     GtkBuilder      *builder; 
     GtkWidget       *window;
  
@@ -47,12 +50,19 @@ static void *gtk_thread(void *arg)
     g_lbl_state     = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_state"));
     g_lbl_timer     = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_timer"));
     g_lbl_count     = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_count"));
-    g_lbl_player    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_player_00"));
+    for( i=0; i<2; i++ ){
+        for( j=0; j<GTK_NUM_PLAYER_EACH_TEM; j++ ){
+            snprintf(label_name, 255, "lbl_player_%d%d", i, j);
+            g_lbl_player[i][j] = GTK_WIDGET( gtk_builder_get_object(builder, label_name));
+        }
+    }
+    
     g_lbl_player_info    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_player_status_00"));
     g_lbl_target    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_target_0"));
     g_lbl_target_info    = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_target_status_0"));
+    gtk_label_set_text(GTK_LABEL(g_lbl_player[0][0]), "Default player 1");
+    gtk_label_set_text(GTK_LABEL(g_lbl_player[1][0]), "Default player 2");
 
-    gtk_label_set_text(GTK_LABEL(g_lbl_player), "No player");
     gtk_label_set_text(GTK_LABEL(g_lbl_target), "No target");
     gtk_builder_connect_signals(builder, NULL);
  
@@ -108,14 +118,19 @@ static gboolean gtk_timer_update(gpointer data)
 
 static gboolean gtk_player_update(gpointer data)
 {
-    GtkLabel *label = (GtkLabel*)data;
+    GtkLabel ***label = (GtkLabel***)data;
+    int i, j;
     char buf[256];
     memset(buf, 0, 256);
 
     switch(gbl_player_info){
         case UI_PLAYER_REGISTER:
-            snprintf(buf, 255, "player%d", gbl_player_num);
-            gtk_label_set_label(label, buf);
+            for( i=0; i<2; i++ ){
+                for( j=0; j<GTK_NUM_PLAYER_EACH_TEM; j++ ){
+                    snprintf(buf, 255, "player%d(%d,%d)", gbl_player_num,i,j);
+                    gtk_label_set_label(GTK_LABEL(g_lbl_player[i][j]), buf);
+                }
+            }
             break;
     }
     return continue_timer;
