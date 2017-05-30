@@ -27,7 +27,14 @@
 DEVICE *tnk_list, *trg_list;
 
 static void *gtk_thread(void *arg);
+void gtk_tnk_bcast( char *str );
 void gtk_trg_bcast( char *str );
+void gtk_tnk_init();
+void gtk_trg_init();
+void gtk_tnk_update( DEVICE *dev, char *str );
+void gtk_tnk_register( DEVICE *dev );
+void gtk_trg_register( DEVICE *dev );
+void gtk_str_state_update( char *str );
 
 char gbl_game_start = 0;
 char gbl_state[30] = "Game start";
@@ -91,14 +98,8 @@ int main(int argc, char **argv)
 		dev[i].new_comer = 0;
 	}
 
-	for( i=0; i<2; i++){
-		for( j=0; j<1; j++ ){
-			ui_info_player[i][j].valid = 0;
-		}
-	}
-	for( i=0; i<7; i++ ){
-		ui_info_target[i].valid = 0;
-	}
+	gtk_tnk_init();
+	gtk_trg_init();
 	round_starting_time = time(NULL);
 	for( state = STATE_NOTHIN;;)
 	{
@@ -113,7 +114,7 @@ int main(int argc, char **argv)
 					state = STATE_MOVING;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_MOVING\n");
-					strcpy(gbl_state,"STATE_MOVING");
+					gtk_str_state_update("STATE_MOVING");
 				}
 				gbl_state_time = round_starting_time - cur_time + 5;
 				break;
@@ -122,14 +123,8 @@ int main(int argc, char **argv)
 					state = STATE_ENDING;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_ENDING\n");
-					strcpy(gbl_state,"STATE_ENDING");
-					for( j=0; j<2; j++ ){
-						for( k=0; k<1; k++ ){
-							if(ui_info_player[1][0].valid){
-								strcpy(ui_info_player[1][0].dev->stat,"Idle");
-							}
-						}
-					}
+					gtk_str_state_update("STATE_ENDING");
+					gtk_tnk_bcast("Idle");
 				}
 				gbl_state_time = round_starting_time - cur_time + 26;
 				break;
@@ -138,7 +133,7 @@ int main(int argc, char **argv)
 					state = STATE_TRGTON;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTON\n");
-					strcpy(gbl_state,"STATE_TRGTON");
+					gtk_str_state_update("STATE_TRGTON");
 					gtk_trg_bcast("Scanning");
 				}
 				gbl_state_time = round_starting_time - cur_time + 5;
@@ -148,7 +143,7 @@ int main(int argc, char **argv)
 					state = STATE_SCNLSR;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_SCNLSR\n");
-					strcpy(gbl_state,"STATE_SCNLSR");
+					gtk_str_state_update("STATE_SCNLSR");
 				}
 				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
@@ -157,7 +152,7 @@ int main(int argc, char **argv)
 					state = STATE_TRGTOF;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTOF\n");
-					strcpy(gbl_state,"STATE_TRGTOF");
+					gtk_str_state_update("STATE_TRGTOF");
 				}
 				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
@@ -166,7 +161,7 @@ int main(int argc, char **argv)
 					state = STATE_NOTHIN;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_NOTHIN\n");
-					strcpy(gbl_state,"STATE_NOTHIN");
+					gtk_str_state_update("STATE_NOTHIN");
 					gtk_trg_bcast("Idle");
 				}
 				gbl_state_time = round_starting_time - cur_time + 8;
@@ -248,27 +243,13 @@ int main(int argc, char **argv)
 					SLIST_INSERT_HEAD(&tnk_head, dev_ptr, entries);
 					gbl_player_num = 1;
 					gbl_player_info = UI_PLAYER_REGISTER;
-					for( j=0; j<1; j++ ){
-						for( k=0; k<2; k++ ){
-							if(ui_info_player[j][k].valid==0){
-								ui_info_player[j][k].valid = 1;
-								ui_info_player[j][k].dev = &dev[i];
-								break;
-							}
-						}
-					}
+					gtk_tnk_register( &dev[i] );
 					break;
 				case TRGT:
 					SLIST_INSERT_HEAD(&trg_head, dev_ptr, entries);
 					gbl_target_num = 1;
 					gbl_target_info = UI_TARGET_REGISTER;
-					for( j=0; j<7; j++ ){
-						if(ui_info_target[j].valid==0){
-							ui_info_target[j].valid = 1;
-							ui_info_target[j].dev = &dev[i];
-							break;
-						}
-					}
+					gtk_trg_register( &dev[i] );
 					break;
 			}
 
@@ -354,31 +335,13 @@ int main(int argc, char **argv)
 									printf("INFO: Tank %s\n", buf);
 									switch(buf[0]){
 										case STATE_MOVING+'0':
-											for( j=0; j<2; j++ ){
-												for( k=0; k<1; k++ ){
-													if(ui_info_player[j][k].valid){
-														strcpy(ui_info_player[1][0].dev->stat,"Moving");
-													}
-												}
-											}
+											gtk_tnk_update( &dev[i], "Moving");
 											break;
 										case 'k':
-											for( j=0; j<2; j++ ){
-												for( k=0; k<1; k++ ){
-													if(ui_info_player[j][k].valid){
-														strcpy(ui_info_player[1][0].dev->stat,"Finish");
-													}
-												}
-											}
+											gtk_tnk_update( &dev[i], "Finish");
 											break;
 										default:
-											for( j=0; j<2; j++ ){
-												for( k=0; k<1; k++ ){
-													if(ui_info_player[j][k].valid){
-														strcpy(ui_info_player[1][0].dev->stat,"Error!");
-													}
-												}
-											}
+											gtk_tnk_update( &dev[i], "Error!");
 											break;
 									}
 									break;
@@ -443,4 +406,71 @@ void gtk_trg_bcast( char *str ){
 			strcpy(ui_info_target[j].dev->stat,str);
 		}
 	}	
+}
+
+void gtk_tnk_bcast( char *str ){
+	int i, j;
+	for( i=0; i<2; i++ ){
+		for( j=0; j<1; j++ ){
+			if(ui_info_player[i][j].valid){
+				strcpy(ui_info_player[i][j].dev->stat,str);
+			}
+		}
+	}
+}
+
+void gtk_tnk_update( DEVICE *dev, char *str ){
+	int i, j;
+	for( i=0; i<2; i++ ){
+		for( j=0; j<1; j++ ){
+			if(ui_info_player[i][j].valid && ui_info_player[i][j].dev==dev){
+				strcpy(ui_info_player[i][j].dev->stat,str);
+				return;
+			}
+		}
+	}	
+}
+void gtk_trg_init(){
+	int i;
+	for( i=0; i<7; i++ ){
+		ui_info_target[i].valid = 0;
+	}	
+}
+
+void gtk_tnk_init(){
+	int i, j;
+	for( i=0; i<2; i++){
+		for( j=0; j<1; j++ ){
+			ui_info_player[i][j].valid = 0;
+		}
+	}	
+}
+
+void gtk_tnk_register( DEVICE *dev ){
+	int i, j;
+	for( i=0; i<1; i++ ){
+		for( j=0; j<2; j++ ){
+			if(ui_info_player[i][j].valid==0){
+				ui_info_player[i][j].valid = 1;
+				ui_info_player[i][j].dev = dev;
+				break;
+			}
+		}
+	}
+}
+
+void gtk_trg_register( DEVICE *dev ){
+	int i;
+	for( i=0; i<7; i++ ){
+		if(ui_info_target[i].valid==0){
+			ui_info_target[i].valid = 1;
+			ui_info_target[i].dev = dev;
+			break;
+		}
+	}
+}
+
+void gtk_str_state_update( char *str ){
+	strcpy(gbl_state, str);
+	return;
 }
