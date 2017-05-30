@@ -91,8 +91,6 @@ int main(int argc, char **argv)
 	// set up device
 	DEVICE dev[NUM_OF_DEV];
 	struct entry *dev_ptr;
-    SLIST_INIT(&tnk_head);
-    SLIST_INIT(&trg_head);
 	for(i=0; i<NUM_OF_DEV; i++){
 		dev[i].fd=-1;
 		dev[i].new_comer = 0;
@@ -240,13 +238,11 @@ int main(int argc, char **argv)
 
 			switch(dev[i].id){
 				case TANK:
-					SLIST_INSERT_HEAD(&tnk_head, dev_ptr, entries);
 					gbl_player_num = 1;
 					gbl_player_info = UI_PLAYER_REGISTER;
 					gtk_tnk_register( &dev[i] );
 					break;
 				case TRGT:
-					SLIST_INSERT_HEAD(&trg_head, dev_ptr, entries);
 					gbl_target_num = 1;
 					gbl_target_info = UI_TARGET_REGISTER;
 					gtk_trg_register( &dev[i] );
@@ -254,19 +250,6 @@ int main(int argc, char **argv)
 			}
 
 			printf("id=%d, ip=%s, port=%d\n", dev[i].id, inet_ntoa(dev[i].ip), ntohs(dev[i].port));
-			printf("Tank list\n");
-			SLIST_FOREACH(np, &tnk_head, entries){
-				printf("Client = %d\n", np->ptr->fd);
-				printf("\t> id = %d\n", np->ptr->id);
-				printf("\t> id = %s\n", inet_ntoa(np->ptr->ip));
-			}
-			printf("Target list\n");
-			SLIST_FOREACH(np, &trg_head, entries){
-				printf("Client = %d\n", np->ptr->fd);
-				printf("\t> id = %d\n", np->ptr->id);
-				printf("\t> id = %s\n", inet_ntoa(np->ptr->ip));
-			}
-
 
 			FD_SET(confd, &allset); //add new descriptor to set
 			if(confd>maxfd)maxfd=confd; // for select()
@@ -286,24 +269,6 @@ int main(int argc, char **argv)
 					close(sockfd);
 					FD_CLR(sockfd, &allset);
 					dev[i].fd=-1;
-					switch(dev[i].id){
-						case TANK:
-							SLIST_FOREACH(np, &tnk_head, entries){
-								if(np->ptr==&dev[i]){
-									SLIST_REMOVE(&tnk_head, np, entry, entries);
-									break;
-								}
-							}
-							break;
-						case TRGT:
-							SLIST_FOREACH(np, &trg_head, entries){
-								if(np->ptr==&dev[i]){
-									SLIST_REMOVE(&trg_head, np, entry, entries);
-									break;
-								}
-							}
-							break;
-					}
 
 				}
 				else
