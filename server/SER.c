@@ -32,6 +32,7 @@ void gtk_trg_bcast( char *str );
 void gtk_tnk_init();
 void gtk_trg_init();
 void gtk_tnk_update( DEVICE *dev, char *str );
+void gtk_trg_update( DEVICE *dev, char *str );
 void gtk_tnk_register( DEVICE *dev );
 void gtk_trg_register( DEVICE *dev );
 void gtk_str_state_update( char *str );
@@ -341,13 +342,16 @@ int main(int argc, char **argv)
 									printf("INFO: %s\n", buf);
 									switch(atoi(buf)){
 										case 1:
-											strcpy(ui_info_target[2].dev->stat,"Hit");
+											gtk_trg_update( &dev[i], "Hit" );
+											// strcpy(ui_info_target[2].dev->stat,"Hit");
 											break;
 										case 0:
-											strcpy(ui_info_target[2].dev->stat,"Save");
+											gtk_trg_update( &dev[i], "Save" );
+											// strcpy(ui_info_target[2].dev->stat,"Save");
 											break;
 										default:
-											strcpy(ui_info_target[2].dev->stat,"Error!");
+											gtk_trg_update( &dev[i], "Error" );
+											// strcpy(ui_info_target[2].dev->stat,"Error!");
 											break;
 									}
 									break;
@@ -395,6 +399,17 @@ void gtk_tnk_update( DEVICE *dev, char *str ){
 		}
 	}	
 }
+
+void gtk_trg_update( DEVICE *dev, char *str ){
+	int i, j;
+	for( i=0; i<7; i++ ){
+		if(ui_info_target[i].valid && ui_info_target[i].dev==dev){
+			strcpy(ui_info_target[i].dev->stat,str);
+			return;
+		}
+	}
+}
+
 void gtk_trg_init(){
 	int i;
 	for( i=0; i<7; i++ ){
