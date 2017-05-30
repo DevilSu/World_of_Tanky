@@ -27,16 +27,14 @@
 DEVICE *tnk_list, *trg_list;
 
 static void *gtk_thread(void *arg);
+void gtk_trg_bcast( char *str );
 
 char gbl_game_start = 0;
 char gbl_state[30] = "Game start";
-char gbl_player[2][1][30];
-char gbl_player_status[2][1][30];
-char gbl_target[7][30];
-char gbl_target_status[7][30];
 int gbl_state_time;
 int gbl_player_num, gbl_player_info;
 int gbl_target_num, gbl_target_info;
+struct ui_info_node ui_info_player[2][1], ui_info_target[7];
 
 int main(int argc, char **argv)
 {
@@ -73,7 +71,7 @@ int main(int argc, char **argv)
 	listen(lisfd, LISTENQ);
 
 	// set up select function
-	int i, j, maxi, maxfd;
+	int i, j, k, maxi, maxfd;
 	int nready;
 	ssize_t n;
 	fd_set rset, allset;
@@ -95,13 +93,11 @@ int main(int argc, char **argv)
 
 	for( i=0; i<2; i++){
 		for( j=0; j<1; j++ ){
-			strcpy(gbl_player[i][j], "a");
-			strcpy(gbl_player_status[i][j], "a");
+			ui_info_player[i][j].valid = 0;
 		}
 	}
 	for( i=0; i<7; i++ ){
-		strcpy(gbl_target[i], "a");
-		strcpy(gbl_target_status[i], "a");
+		ui_info_target[i].valid = 0;
 	}
 	round_starting_time = time(NULL);
 	for( state = STATE_NOTHIN;;)
@@ -127,7 +123,13 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_ENDING\n");
 					strcpy(gbl_state,"STATE_ENDING");
-					strcpy(gbl_player_status[1][0],"Idle");
+					for( j=0; j<2; j++ ){
+						for( k=0; k<1; k++ ){
+							if(ui_info_player[1][0].valid){
+								strcpy(ui_info_player[1][0].dev->stat,"Idle");
+							}
+						}
+					}
 				}
 				gbl_state_time = round_starting_time - cur_time + 26;
 				break;
@@ -137,7 +139,7 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTON\n");
 					strcpy(gbl_state,"STATE_TRGTON");
-					strcpy(gbl_target_status[2],"Scanning");
+					gtk_trg_bcast("Scanning");
 				}
 				gbl_state_time = round_starting_time - cur_time + 5;
 				break;
@@ -165,7 +167,7 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_NOTHIN\n");
 					strcpy(gbl_state,"STATE_NOTHIN");
-					strcpy(gbl_target_status[2],"Idle");
+					gtk_trg_bcast("Idle");
 				}
 				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
@@ -233,16 +235,40 @@ int main(int argc, char **argv)
 			dev[i].ip=cliaddr.sin_addr;
 			dev[i].port=cliaddr.sin_port;
 
+			sprintf(buf, "num%d", dev[i].fd);
+			dev[i].name = (char*)malloc(30*sizeof(char));
+			strcpy(dev[i].name,buf);
+
+			sprintf(buf, "Register");
+			dev[i].stat = (char*)malloc(30*sizeof(char));
+			strcpy(dev[i].stat,buf);
+
 			switch(dev[i].id){
 				case TANK:
 					SLIST_INSERT_HEAD(&tnk_head, dev_ptr, entries);
 					gbl_player_num = 1;
 					gbl_player_info = UI_PLAYER_REGISTER;
+					for( j=0; j<1; j++ ){
+						for( k=0; k<2; k++ ){
+							if(ui_info_player[j][k].valid==0){
+								ui_info_player[j][k].valid = 1;
+								ui_info_player[j][k].dev = &dev[i];
+								break;
+							}
+						}
+					}
 					break;
 				case TRGT:
 					SLIST_INSERT_HEAD(&trg_head, dev_ptr, entries);
 					gbl_target_num = 1;
 					gbl_target_info = UI_TARGET_REGISTER;
+					for( j=0; j<7; j++ ){
+						if(ui_info_target[j].valid==0){
+							ui_info_target[j].valid = 1;
+							ui_info_target[j].dev = &dev[i];
+							break;
+						}
+					}
 					break;
 			}
 
@@ -328,13 +354,31 @@ int main(int argc, char **argv)
 									printf("INFO: Tank %s\n", buf);
 									switch(buf[0]){
 										case STATE_MOVING+'0':
-											strcpy(gbl_player_status[1][0],"Moving");
+											for( j=0; j<2; j++ ){
+												for( k=0; k<1; k++ ){
+													if(ui_info_player[j][k].valid){
+														strcpy(ui_info_player[1][0].dev->stat,"Moving");
+													}
+												}
+											}
 											break;
 										case 'k':
-											strcpy(gbl_player_status[1][0],"Finish");
+											for( j=0; j<2; j++ ){
+												for( k=0; k<1; k++ ){
+													if(ui_info_player[j][k].valid){
+														strcpy(ui_info_player[1][0].dev->stat,"Finish");
+													}
+												}
+											}
 											break;
 										default:
-											strcpy(gbl_player_status[1][0],"Error!");
+											for( j=0; j<2; j++ ){
+												for( k=0; k<1; k++ ){
+													if(ui_info_player[j][k].valid){
+														strcpy(ui_info_player[1][0].dev->stat,"Error!");
+													}
+												}
+											}
 											break;
 									}
 									break;
@@ -369,16 +413,15 @@ int main(int argc, char **argv)
 									printf("INFO: %s\n", buf);
 									switch(atoi(buf)){
 										case 1:
-											strcpy(gbl_target_status[2],"Hit");
+											strcpy(ui_info_target[2].dev->stat,"Hit");
 											break;
 										case 0:
-											strcpy(gbl_target_status[2],"Save");
+											strcpy(ui_info_target[2].dev->stat,"Save");
 											break;
 										default:
-											strcpy(gbl_target_status[2],"Error!");
+											strcpy(ui_info_target[2].dev->stat,"Error!");
 											break;
 									}
-
 									break;
 								case 2:	// Identify tank ONCE
 									break;
@@ -391,4 +434,13 @@ int main(int argc, char **argv)
 		}
 	}
 	return 0;
+}
+
+void gtk_trg_bcast( char *str ){
+	int j;
+	for( j=0; j<7; j++ ){
+		if(ui_info_target[j].valid){
+			strcpy(ui_info_target[j].dev->stat,str);
+		}
+	}	
 }

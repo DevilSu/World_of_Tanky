@@ -28,13 +28,10 @@ static gboolean gtk_target_update(gpointer data);
 
 extern char gbl_game_start;
 extern char gbl_state[];
-extern char gbl_player_status[][1][30];
-extern char gbl_player[][1][30];
-extern char gbl_target_status[][30];
-extern char gbl_target[][30];
 extern int gbl_state_time;
 extern int gbl_player_num, gbl_player_info;
 extern int gbl_target_num, gbl_target_info;
+extern struct ui_info_node ui_info_player[][1], ui_info_target[];
 
 static void *gtk_thread(void *arg)
 {
@@ -138,9 +135,13 @@ static gboolean gtk_player_update(gpointer data)
     //     case UI_PLAYER_REGISTER:
     for( i=0; i<2; i++ ){
         for( j=0; j<GTK_NUM_PLAYER_EACH_TEM; j++ ){
-            // snprintf(buf, 255, "player%d(%d,%d)", gbl_player_num,i,j);
-            snprintf(buf, 255, "%s", gbl_player[i][j]);
-            gtk_label_set_label(GTK_LABEL(g_lbl_player[i][j]), buf);
+            if(ui_info_player[i][j].valid){
+                strcpy( buf, ui_info_player[i][j].dev->name );
+                gtk_label_set_label(GTK_LABEL(g_lbl_player[i][j]), buf);
+            }
+            else{
+                gtk_label_set_label(GTK_LABEL(g_lbl_player[i][j]), "x");
+            }
         }
     }
             // break;
@@ -157,9 +158,14 @@ static gboolean gtk_player_info_update(gpointer data)
 
     for( i=0; i<2; i++ ){
         for( j=0; j<GTK_NUM_PLAYER_EACH_TEM; j++ ){
-            // snprintf(buf, 255, "player%d(%d,%d)", gbl_player_num,i,j);
-            snprintf(buf, 255, "%s", gbl_player_status[i][j]);
-            gtk_label_set_label(GTK_LABEL(g_lbl_player_info[i][j]), buf);
+
+            if(ui_info_player[i][j].valid){
+                strcpy( buf, ui_info_player[i][j].dev->stat );
+                gtk_label_set_label(GTK_LABEL(g_lbl_player_info[i][j]), buf);
+            }
+            else{
+                gtk_label_set_label(GTK_LABEL(g_lbl_player_info[i][j]), "x");
+            }
         }
     }
     return continue_timer;
@@ -174,8 +180,13 @@ static gboolean gtk_target_info_update(gpointer data)
 
     // snprintf(buf, 255, "%s", gbl_target_status);
     for( i=0; i<7; i++ ){
-        strcpy( buf, gbl_target_status[i] );
-        gtk_label_set_label(GTK_LABEL(g_lbl_target_info[i]), buf);
+        if(ui_info_target[i].valid){
+            strcpy( buf, ui_info_target[i].dev->stat );
+            gtk_label_set_label(GTK_LABEL(g_lbl_target_info[i]), buf);
+        }
+        else{
+            gtk_label_set_label(GTK_LABEL(g_lbl_target_info[i]), "x");
+        }
     }
     return continue_timer;
 }
@@ -188,15 +199,14 @@ static gboolean gtk_target_update(gpointer data)
     memset(buf, 0, 256);
 
     for( i=0; i<7; i++ ){
-        strcpy( buf, gbl_target[i] );
-        gtk_label_set_label(GTK_LABEL(g_lbl_target[i]), buf);
+        if(ui_info_target[i].valid){
+            strcpy( buf, ui_info_target[i].dev->name );
+            gtk_label_set_label(GTK_LABEL(g_lbl_target[i]), buf);
+        }
+        else{
+            gtk_label_set_label(GTK_LABEL(g_lbl_target[i]), "x");
+        }
     }
-    // switch(gbl_target_info){
-    //     case UI_TARGET_REGISTER:
-    //         snprintf(buf, 255, "target%d", gbl_target_num);
-    //         gtk_label_set_label(GTK_LABEL(g_lbl_target[1]), buf);
-    //         break;
-    // }
     return continue_timer;
 }
 

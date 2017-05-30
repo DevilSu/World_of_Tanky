@@ -92,9 +92,14 @@ typedef struct device
     int state;
     int new_comer;
     int health;
+    char *name, *stat;
 
 }DEVICE;
 
+struct ui_info_node{
+    DEVICE *dev;
+    char valid;
+};
 
 SLIST_HEAD(slisthead, entry)\
     trg_head = SLIST_HEAD_INITIALIZER(trg_head),\
