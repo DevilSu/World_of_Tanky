@@ -35,10 +35,12 @@ void gtk_tnk_update( DEVICE *dev, char *str );
 void gtk_trg_update( DEVICE *dev, char *str );
 void gtk_tnk_register( DEVICE *dev );
 void gtk_trg_register( DEVICE *dev );
+void gtk_sco_increment( int team, int value );
 void gtk_str_state_update( char *str );
 
 char gbl_game_start = 0;
 char gbl_state[30] = "Game start";
+int gbl_score[2];
 int gbl_state_time;
 int gbl_player_num, gbl_player_info;
 int gbl_target_num, gbl_target_info;
@@ -339,20 +341,16 @@ int main(int argc, char **argv)
 						case STATE_TRGTOF:
 							switch(dev[i].id){
 								case 3: // Ignore target's ping
-									printf("INFO: %s\n", buf);
-									switch(atoi(buf)){
-										case 1:
-											gtk_trg_update( &dev[i], "Hit" );
-											// strcpy(ui_info_target[2].dev->stat,"Hit");
-											break;
-										case 0:
-											gtk_trg_update( &dev[i], "Save" );
-											// strcpy(ui_info_target[2].dev->stat,"Save");
-											break;
-										default:
-											gtk_trg_update( &dev[i], "Error" );
-											// strcpy(ui_info_target[2].dev->stat,"Error!");
-											break;
+									printf("INFO: %s(%d)\n", buf, atoi(buf));
+									if(atoi(buf)){
+										gtk_trg_update( &dev[i], "Hit" );
+										gtk_sco_increment(0,atoi(buf));
+									}
+									else if(buf[0]=='0'){
+										gtk_trg_update( &dev[i], "Save" );
+									}
+									else{
+										gtk_trg_update( &dev[i], "Error" );
 									}
 									break;
 								case 2:	// Identify tank ONCE
@@ -448,6 +446,11 @@ void gtk_trg_register( DEVICE *dev ){
 			break;
 		}
 	}
+}
+
+void gtk_sco_increment( int team, int value ){
+	gbl_score[team] += value;
+	return;
 }
 
 void gtk_str_state_update( char *str ){

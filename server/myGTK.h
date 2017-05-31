@@ -17,6 +17,7 @@ GtkWidget *g_lbl_player[2][GTK_NUM_PLAYER_EACH_TEM];
 GtkWidget *g_lbl_player_info[2][GTK_NUM_PLAYER_EACH_TEM];
 GtkWidget *g_lbl_target[7];
 GtkWidget *g_lbl_target_info[7];
+GtkWidget *g_lbl_score[2];
 
 // static gboolean update(gpointer data);
 static gboolean gtk_state_update(gpointer data);
@@ -25,9 +26,11 @@ static gboolean gtk_player_info_update(gpointer data);
 static gboolean gtk_target_info_update(gpointer data);
 static gboolean gtk_player_update(gpointer data);
 static gboolean gtk_target_update(gpointer data);
+static gboolean gtk_score_update(gpointer data);
 
 extern char gbl_game_start;
 extern char gbl_state[];
+extern int gbl_score[];
 extern int gbl_state_time;
 extern int gbl_player_num, gbl_player_info;
 extern int gbl_target_num, gbl_target_info;
@@ -50,6 +53,8 @@ static void *gtk_thread(void *arg)
     g_lbl_timer     = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_timer"));
     g_lbl_count     = GTK_WIDGET( gtk_builder_get_object(builder, "lbl_count"));
     for( i=0; i<2; i++ ){
+        sprintf( label_name, "lbl_player_score_%d0", i );
+        g_lbl_score[i] = GTK_WIDGET( gtk_builder_get_object(builder, label_name));
         for( j=0; j<GTK_NUM_PLAYER_EACH_TEM; j++ ){
             snprintf(label_name, 255, "lbl_player_%d%d", i, j);
             g_lbl_player[i][j] = GTK_WIDGET( gtk_builder_get_object(builder, label_name));
@@ -84,6 +89,7 @@ static void *gtk_thread(void *arg)
     g_timeout_add_seconds(1, gtk_target_info_update, g_lbl_target_info);
     g_timeout_add_seconds(1, gtk_player_update, g_lbl_player);
     g_timeout_add_seconds(1, gtk_target_update, g_lbl_target);
+    g_timeout_add_seconds(1, gtk_score_update, g_lbl_target);
 
     gtk_main();
     return(NULL);
@@ -206,6 +212,20 @@ static gboolean gtk_target_update(gpointer data)
         else{
             gtk_label_set_label(GTK_LABEL(g_lbl_target[i]), "x");
         }
+    }
+    return continue_timer;
+}
+
+static gboolean gtk_score_update(gpointer data)
+{
+    GtkLabel *label = (GtkLabel*)data;
+    int i;
+    char buf[256];
+    memset(buf, 0, 256);
+
+    for( i=0; i<2; i++ ){
+        sprintf( buf, "%d", gbl_score[i] );
+        gtk_label_set_label(GTK_LABEL(g_lbl_score[i]), buf);
     }
     return continue_timer;
 }
