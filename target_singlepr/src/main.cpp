@@ -155,16 +155,20 @@ Serial.println("Count");
 }
 
 void esp8266_sendCmd( char *str, int time_delay ){
+    
+    int i;
+    unsigned long start;
     Serial.print("\nSend: ");
     Serial.println(str);
     ESP8266.print(str);
     Serial.print("Return: ");
-    delay(time_delay);
-    int i=0;
-    while( ESP8266.available() ){
-        char tmp = ESP8266.read();
-        Serial.print(tmp);
-        ret[i++] = tmp;
+    // delay(time_delay);
+    for( i=0, start = millis(); millis()<start+time_delay; ){
+        if( ESP8266.available() ){
+            char tmp = ESP8266.read();
+            Serial.print(tmp);
+            ret[i++] = tmp;
+        }
     }
     ret[i] = 0;
     Serial.println();
@@ -179,13 +183,15 @@ void esp8266_sendData( char *str ){
 
 void esp8266_getData(){
     int i;
+    unsigned long start;
     while( ESP8266.available()==0 );
     Serial.print("Return: ");
-    delay(100);
-    while( ESP8266.available() ){
-        char tmp = ESP8266.read();
-        Serial.print(tmp);
-        ret[i++] = tmp;
+    for( i=0, start = millis(); millis()<start+100; ){
+        if( ESP8266.available() ){
+            char tmp = ESP8266.read();
+            Serial.print(tmp);
+            ret[i++] = tmp;
+        }
     }
     Serial.println();
 }
