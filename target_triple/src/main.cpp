@@ -15,7 +15,7 @@
 SoftwareSerial ESP8266(10,11); // RX, TX
 
 // Function declaration
-void esp8266_sendCmd( char *str, int time_delay );
+void esp8266_sendCmd( char *str, int time_delay, char *needle = NULL );
 void esp8266_sendData( char *str );
 void esp8266_getData();
 
@@ -33,14 +33,14 @@ void setup() {
         ; // wait for serial port to connect. Needed for native USB port only
     }
 
-    esp8266_sendCmd("ATE0\r\n",500);
-    esp8266_sendCmd("AT\r\n",500);
+    esp8266_sendCmd("ATE0\r\n", 500, "OK");
+    esp8266_sendCmd("AT\r\n", 500, "OK");
 
     sprintf( cmd, "AT+CWJAP=\"%s\",\"%s\"\r\n", SSID, SSID_PASS );
-    esp8266_sendCmd( cmd, 10000);
+    esp8266_sendCmd( cmd, 10000, "OK" );
 
     sprintf( cmd, "AT+CIPSTART=\"TCP\",\"%s\",%d\r\n", IP, PORT );
-    esp8266_sendCmd( cmd, 10000);
+    esp8266_sendCmd( cmd, 10000, "OK" );
 
     esp8266_sendData("3\n");
 
@@ -171,17 +171,26 @@ void loop() { // run over and over
     delay(50);
 }
 
-void esp8266_sendCmd( char *str, int time_delay ){
+void esp8266_sendCmd( char *str, int time_delay, char *needle = NULL ){
+    
+    int i;
+    unsigned long start;
     Serial.print("\nSend: ");
     Serial.println(str);
     ESP8266.print(str);
     Serial.print("Return: ");
-    delay(time_delay);
-    int i=0;
-    while( ESP8266.available() ){
-        char tmp = ESP8266.read();
-        Serial.print(tmp);
-        ret[i++] = tmp;
+    // delay(time_delay);
+    for( i=0, start = millis(); millis()<start+time_delay; ){
+        if( ESP8266.available() ){
+            char tmp = ESP8266.read();
+            Serial.print(tmp);
+            ret[i++] = tmp;
+            ret[i] = 0;
+            if( needle!=NULL && strstr(ret, needle)!=NULL ){
+                while( ESP8266.available()!=0 );
+                break;
+            }
+        }
     }
     ret[i] = 0;
     Serial.println();
@@ -190,19 +199,21 @@ void esp8266_sendCmd( char *str, int time_delay ){
 void esp8266_sendData( char *str ){
     char cmd[30];
     sprintf(cmd, "AT+CIPSEND=%d\r\n", strlen(str));
-    esp8266_sendCmd(cmd,2000);
+    esp8266_sendCmd(cmd,2000, ">");
     esp8266_sendCmd(str,2000);
 }
 
 void esp8266_getData(){
     int i;
+    unsigned long start;
     while( ESP8266.available()==0 );
-    Serial.print("Return: ");
-    delay(100);
-    while( ESP8266.available() ){
-        char tmp = ESP8266.read();
-        Serial.print(tmp);
-        ret[i++] = tmp;
+    Serial.print("Return; ");
+    for( i=0, start = millis(); millis()<start+100; ){
+        if( ESP8266.available() ){
+            char tmp = ESP8266.read();
+            Serial.print(tmp);
+            ret[i++] = tmp;
+        }
     }
     Serial.println();
 }
