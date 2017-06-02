@@ -1,3 +1,5 @@
+#ifndef INFO_H
+#define INFO_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,11 +103,4 @@ struct ui_info_node{
     char valid;
 };
 
-SLIST_HEAD(slisthead, entry)\
-    trg_head = SLIST_HEAD_INITIALIZER(trg_head),\
-    tnk_head = SLIST_HEAD_INITIALIZER(tnk_head);
-struct slisthead *headp;
-struct entry {
-    SLIST_ENTRY(entry) entries;
-    struct device *ptr;
-}*np;
+#endif

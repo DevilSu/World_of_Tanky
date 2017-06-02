@@ -26,7 +26,7 @@
 
 DEVICE *tnk_list, *trg_list;
 
-static void *gtk_thread(void *arg);
+void *gtk_thread(void *arg);
 void gtk_tnk_bcast( char *str );
 void gtk_trg_bcast( char *str, int team );
 void gtk_tnk_init();
@@ -45,6 +45,15 @@ int gbl_state_time;
 int gbl_player_num, gbl_player_info;
 int gbl_target_num, gbl_target_info;
 struct ui_info_node ui_info_player[2][1], ui_info_target[7];
+
+SLIST_HEAD(slisthead, entry)\
+    trg_head = SLIST_HEAD_INITIALIZER(trg_head),\
+    tnk_head = SLIST_HEAD_INITIALIZER(tnk_head);
+struct slisthead *headp;
+struct entry {
+    SLIST_ENTRY(entry) entries;
+    struct device *ptr;
+}*np;
 
 int main(int argc, char **argv)
 {
