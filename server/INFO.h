@@ -91,7 +91,7 @@ typedef struct device
     // ?????
     int state;
     int new_comer;
-    int health;
+    int health[2];
     char *name, *stat;
 
 }DEVICE;

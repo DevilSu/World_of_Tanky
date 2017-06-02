@@ -28,7 +28,7 @@ DEVICE *tnk_list, *trg_list;
 
 static void *gtk_thread(void *arg);
 void gtk_tnk_bcast( char *str );
-void gtk_trg_bcast( char *str );
+void gtk_trg_bcast( char *str, int team );
 void gtk_tnk_init();
 void gtk_trg_init();
 void gtk_tnk_update( DEVICE *dev, char *str );
@@ -54,6 +54,7 @@ int main(int argc, char **argv)
 	pthread_create(&tid, NULL, gtk_thread, NULL);
 
 	// set up TCP server
+	int cur_team = 0;
 	int state;
 	char state_str;
 	int lisfd, confd, sockfd;
@@ -115,7 +116,9 @@ int main(int argc, char **argv)
 					state = STATE_MOVING;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_MOVING\n");
-					gtk_str_state_update("STATE_MOVING");
+					sprintf( buf, "STATE_MOVING%d", cur_team);
+					gtk_str_state_update(buf);
+					// gtk_str_state_update("STATE_MOVING");
 				}
 				gbl_state_time = round_starting_time - cur_time + 5;
 				break;
@@ -135,7 +138,13 @@ int main(int argc, char **argv)
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_TRGTON\n");
 					gtk_str_state_update("STATE_TRGTON");
-					gtk_trg_bcast("Scanning");
+					for( i=0; i<7; i++ ){
+						if(ui_info_target[i].valid && ui_info_target[i].dev->health[cur_team]>0)
+							gtk_trg_update( ui_info_target[i].dev, "Scanning" );
+						else if(ui_info_target[i].valid)
+							gtk_trg_update( ui_info_target[i].dev, "Dead" );
+					}
+					// gtk_trg_bcast("Scanning", cur_team);
 				}
 				gbl_state_time = round_starting_time - cur_time + 5;
 				break;
@@ -160,10 +169,17 @@ int main(int argc, char **argv)
 			case STATE_TRGTOF:
 				if( cur_time - round_starting_time > 8 ){
 					state = STATE_NOTHIN;
+					cur_team = (++cur_team)%2;
 					round_starting_time = time(NULL);
 					printf("\nstate change to STATE_NOTHIN\n");
 					gtk_str_state_update("STATE_NOTHIN");
-					gtk_trg_bcast("Idle");
+					for( i=0; i<7; i++ ){
+						if(ui_info_target[i].valid && ui_info_target[i].dev->health[cur_team]>0)
+							gtk_trg_update( ui_info_target[i].dev, "Idle" );
+						else if(ui_info_target[i].valid)
+							gtk_trg_update( ui_info_target[i].dev, "Dead" );
+					}
+					// gtk_trg_bcast("Idle", cur_team);
 				}
 				gbl_state_time = round_starting_time - cur_time + 8;
 				break;
@@ -193,8 +209,14 @@ int main(int argc, char **argv)
 						break;
 					case 3:
 						if( state==STATE_TRGTON || state==STATE_TRGTOF ){
-							write(dev[i].fd, &state_str, 1);
-							printf("Send changing state %d to dev[%d]\n", state_str-'0', i);
+							if( dev[i].health>0 ){
+								write(dev[i].fd, &state_str, 1);
+								printf("Send changing state %d to dev[%d]\n", state_str-'0', i);
+							}
+							else{
+								write(dev[i].fd, &state_str, 1);
+								printf("Send changing state %d to dev[%d]\n", state_str-'0', i);
+							}
 						}
 						break;
 				}
@@ -248,6 +270,7 @@ int main(int argc, char **argv)
 				case TRGT:
 					gbl_target_num = 1;
 					gbl_target_info = UI_TARGET_REGISTER;
+					for( j=0; j<2; j++ ) dev[i].health[j] = 1;
 					gtk_trg_register( &dev[i] );
 					break;
 			}
@@ -342,9 +365,17 @@ int main(int argc, char **argv)
 							switch(dev[i].id){
 								case 3: // Ignore target's ping
 									printf("INFO: %s(%d)\n", buf, atoi(buf));
-									if(atoi(buf)){
-										gtk_trg_update( &dev[i], "Hit" );
-										gtk_sco_increment(0,atoi(buf));
+									if(dev[i].health[cur_team]<=0){
+										gtk_trg_update( &dev[i], "Struggle" );
+									}
+									else if(atoi(buf)){
+										if(dev[i].health[cur_team]>0)
+											gtk_sco_increment(cur_team,atoi(buf));
+										dev[i].health[cur_team] -= atoi(buf);
+										if(dev[i].health[cur_team]>0)
+											gtk_trg_update( &dev[i], "Hit" );
+										else
+											gtk_trg_update( &dev[i], "Broken" );
 									}
 									else if(buf[0]=='0'){
 										gtk_trg_update( &dev[i], "Save" );
@@ -366,10 +397,10 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void gtk_trg_bcast( char *str ){
+void gtk_trg_bcast( char *str, int team ){
 	int j;
 	for( j=0; j<7; j++ ){
-		if(ui_info_target[j].valid){
+		if( ui_info_target[j].valid && ui_info_target[j].dev->health[team]>0 ){
 			strcpy(ui_info_target[j].dev->stat,str);
 		}
 	}	
