@@ -64,7 +64,7 @@ void on_btn_start_clicked(){
     return;
 }
 
-// static gboolean update(gpointer data)
+// gboolean update(gpointer data)
 // {
 //     GtkLabel *label = (GtkLabel*)data;
 //     char buf[256];
@@ -74,7 +74,7 @@ void on_btn_start_clicked(){
 //     return continue_timer;
 // }
 
-static gboolean gtk_state_update(gpointer data)
+gboolean gtk_state_update(gpointer data)
 {
     GtkLabel *label = (GtkLabel*)data;
     char buf[256];
@@ -84,7 +84,7 @@ static gboolean gtk_state_update(gpointer data)
     return continue_timer;
 }
 
-static gboolean gtk_timer_update(gpointer data)
+gboolean gtk_timer_update(gpointer data)
 {
     GtkLabel *label = (GtkLabel*)data;
     char buf[256];
@@ -94,7 +94,7 @@ static gboolean gtk_timer_update(gpointer data)
     return continue_timer;
 }
 
-static gboolean gtk_player_update(gpointer data)
+gboolean gtk_player_update(gpointer data)
 {
     GtkLabel ***label = (GtkLabel***)data;
     int i, j;
@@ -119,7 +119,7 @@ static gboolean gtk_player_update(gpointer data)
     return continue_timer;
 }
 
-static gboolean gtk_player_info_update(gpointer data)
+gboolean gtk_player_info_update(gpointer data)
 {
     GtkLabel *label = (GtkLabel*)data;
     int i,j;
@@ -141,7 +141,7 @@ static gboolean gtk_player_info_update(gpointer data)
     return continue_timer;
 }
 
-static gboolean gtk_target_info_update(gpointer data)
+gboolean gtk_target_info_update(gpointer data)
 {
     GtkLabel *label = (GtkLabel*)data;
     int i;
@@ -161,7 +161,7 @@ static gboolean gtk_target_info_update(gpointer data)
     return continue_timer;
 }
 
-static gboolean gtk_target_update(gpointer data)
+gboolean gtk_target_update(gpointer data)
 {
     GtkLabel *label = (GtkLabel*)data;
     int i;
@@ -180,7 +180,7 @@ static gboolean gtk_target_update(gpointer data)
     return continue_timer;
 }
 
-static gboolean gtk_score_update(gpointer data)
+gboolean gtk_score_update(gpointer data)
 {
     GtkLabel *label = (GtkLabel*)data;
     int i;
@@ -196,7 +196,7 @@ static gboolean gtk_score_update(gpointer data)
 
 void on_btn_hello_clicked()
 {
-    static unsigned int count = 0;
+    unsigned int count = 0;
     char str_count[30] = {0};
     
     gtk_label_set_text(GTK_LABEL(g_lbl_state), "Hello, world!");

@@ -21,13 +21,13 @@ GtkWidget *g_lbl_score[2];
 
 // static gboolean update(gpointer data);
 void *gtk_thread(void *arg);
-static gboolean gtk_state_update(gpointer data);
-static gboolean gtk_timer_update(gpointer data);
-static gboolean gtk_player_info_update(gpointer data);
-static gboolean gtk_target_info_update(gpointer data);
-static gboolean gtk_player_update(gpointer data);
-static gboolean gtk_target_update(gpointer data);
-static gboolean gtk_score_update(gpointer data);
+gboolean gtk_state_update(gpointer data);
+gboolean gtk_timer_update(gpointer data);
+gboolean gtk_player_info_update(gpointer data);
+gboolean gtk_target_info_update(gpointer data);
+gboolean gtk_player_update(gpointer data);
+gboolean gtk_target_update(gpointer data);
+gboolean gtk_score_update(gpointer data);
 
 extern int sec_expired;
 extern char gbl_game_start;
