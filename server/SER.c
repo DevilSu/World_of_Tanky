@@ -37,6 +37,7 @@ void gtk_tnk_register( DEVICE *dev );
 void gtk_trg_register( DEVICE *dev );
 void gtk_sco_increment( int team, int value );
 void gtk_str_state_update( char *str );
+void state_handler( int state, time_t round_starting_time, struct sStatus status );
 void state_change( int target, struct sStatus status );
 
 char gbl_game_start = 0;
@@ -126,44 +127,7 @@ int main(int argc, char **argv)
 		if(!gbl_game_start){
 			round_starting_time = cur_time;
 		}
-		switch(state){
-			case STATE_NOTHIN:
-				if( cur_time - round_starting_time > TIME_NOTHIN ){
-					state_change(STATE_MOVING, status);
-				}
-				gbl_state_time = round_starting_time - cur_time + TIME_NOTHIN;
-				break;
-			case STATE_MOVING:
-				if( cur_time - round_starting_time > TIME_MOVING ){
-					state_change(STATE_ENDING, status);
-				}
-				gbl_state_time = round_starting_time - cur_time + TIME_MOVING;
-				break;
-			case STATE_ENDING:
-				if( cur_time - round_starting_time > TIME_ENDING ){
-					state_change(STATE_TRGTON, status);
-				}
-				gbl_state_time = round_starting_time - cur_time + TIME_ENDING;
-				break;
-			case STATE_TRGTON:
-				if( cur_time - round_starting_time > TIME_TRGTON ){
-					state_change(STATE_SCNLSR, status);
-				}
-				gbl_state_time = round_starting_time - cur_time + TIME_TRGTON;
-				break;
-			case STATE_SCNLSR:
-				if( cur_time - round_starting_time > TIME_SCNLSR ){
-					state_change(STATE_TRGTOF, status);
-				}
-				gbl_state_time = round_starting_time - cur_time + TIME_SCNLSR;
-				break;
-			case STATE_TRGTOF:
-				if( cur_time - round_starting_time > TIME_TRGTOF ){
-					state_change(STATE_NOTHIN, status);
-				}
-				gbl_state_time = round_starting_time - cur_time + TIME_TRGTOF;
-				break;
-		}
+		state_handler( state, round_starting_time, status );
 
 		// Client state updating
 		state_str = state + '0';
@@ -375,6 +339,72 @@ int main(int argc, char **argv)
 		}
 	}
 	return 0;
+}
+
+void state_handler( int state, time_t round_starting_time, struct sStatus status ){
+	time_t cur_time = time(NULL);
+	switch(state){
+		case STATE_NOTHIN:
+			if( cur_time - round_starting_time > TIME_NOTHIN ){
+				state_change(STATE_MOVING, status);
+			}
+			else if( gbl_button_pressed ){
+				state_change(STATE_MOVING, status);
+				gbl_button_pressed = 0;
+			}
+			gbl_state_time = round_starting_time - cur_time + TIME_NOTHIN;
+			break;
+		case STATE_MOVING:
+			if( cur_time - round_starting_time > TIME_MOVING ){
+				state_change(STATE_ENDING, status);
+			}
+			else if( gbl_button_pressed ){
+				state_change(STATE_ENDING, status);
+				gbl_button_pressed = 0;
+			}
+			gbl_state_time = round_starting_time - cur_time + TIME_MOVING;
+			break;
+		case STATE_ENDING:
+			if( cur_time - round_starting_time > TIME_ENDING ){
+				state_change(STATE_TRGTON, status);
+			}
+			else if( gbl_button_pressed ){
+				state_change(STATE_TRGTON, status);
+				gbl_button_pressed = 0;
+			}
+			gbl_state_time = round_starting_time - cur_time + TIME_ENDING;
+			break;
+		case STATE_TRGTON:
+			if( cur_time - round_starting_time > TIME_TRGTON ){
+				state_change(STATE_SCNLSR, status);
+			}
+			else if( gbl_button_pressed ){
+				state_change(STATE_SCNLSR, status);
+				gbl_button_pressed = 0;
+			}
+			gbl_state_time = round_starting_time - cur_time + TIME_TRGTON;
+			break;
+		case STATE_SCNLSR:
+			if( cur_time - round_starting_time > TIME_SCNLSR ){
+				state_change(STATE_TRGTOF, status);
+			}
+			else if( gbl_button_pressed ){
+				state_change(STATE_TRGTOF, status);
+				gbl_button_pressed = 0;
+			}
+			gbl_state_time = round_starting_time - cur_time + TIME_SCNLSR;
+			break;
+		case STATE_TRGTOF:
+			if( cur_time - round_starting_time > TIME_TRGTOF ){
+				state_change(STATE_NOTHIN, status);
+			}
+			else if( gbl_button_pressed ){
+				state_change(STATE_NOTHIN, status);
+				gbl_button_pressed = 0;
+			}
+			gbl_state_time = round_starting_time - cur_time + TIME_TRGTOF;
+			break;
+	}
 }
 
 void state_change( int target, struct sStatus status ){
