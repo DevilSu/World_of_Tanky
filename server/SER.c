@@ -37,6 +37,7 @@ void gtk_tnk_register( DEVICE *dev );
 void gtk_trg_register( DEVICE *dev );
 void gtk_sco_increment( int team, int value );
 void gtk_str_state_update( char *str );
+void state_change( int target, struct sStatus status );
 
 char gbl_game_start = 0;
 char gbl_state[30] = "Game start";
@@ -101,6 +102,12 @@ int main(int argc, char **argv)
 	FD_ZERO(&allset);
 	FD_SET(lisfd, &allset);
 
+	// Config status
+	struct sStatus status;
+	status.state = &state;
+	status.round_starting_time = &round_starting_time;
+	status.cur_team = &cur_team;
+
 	// set up device
 	DEVICE dev[NUM_OF_DEV];
 	struct entry *dev_ptr;
@@ -121,76 +128,40 @@ int main(int argc, char **argv)
 		}
 		switch(state){
 			case STATE_NOTHIN:
-				if( cur_time - round_starting_time > 5 ){
-					state = STATE_MOVING;
-					round_starting_time = time(NULL);
-					printf("\nstate change to STATE_MOVING\n");
-					sprintf( buf, "STATE_MOVING%d", cur_team);
-					gtk_str_state_update(buf);
-					// gtk_str_state_update("STATE_MOVING");
+				if( cur_time - round_starting_time > TIME_NOTHIN ){
+					state_change(STATE_MOVING, status);
 				}
-				gbl_state_time = round_starting_time - cur_time + 5;
+				gbl_state_time = round_starting_time - cur_time + TIME_NOTHIN;
 				break;
 			case STATE_MOVING:
-				if( cur_time - round_starting_time > 26 ){
-					state = STATE_ENDING;
-					round_starting_time = time(NULL);
-					printf("\nstate change to STATE_ENDING\n");
-					gtk_str_state_update("STATE_ENDING");
-					gtk_tnk_bcast("Idle");
+				if( cur_time - round_starting_time > TIME_MOVING ){
+					state_change(STATE_ENDING, status);
 				}
-				gbl_state_time = round_starting_time - cur_time + 26;
+				gbl_state_time = round_starting_time - cur_time + TIME_MOVING;
 				break;
 			case STATE_ENDING:
-				if( cur_time - round_starting_time > 5 ){
-					state = STATE_TRGTON;
-					round_starting_time = time(NULL);
-					printf("\nstate change to STATE_TRGTON\n");
-					gtk_str_state_update("STATE_TRGTON");
-					for( i=0; i<7; i++ ){
-						if(ui_info_target[i].valid && ui_info_target[i].dev->health[cur_team]>0)
-							gtk_trg_update( ui_info_target[i].dev, "Scanning" );
-						else if(ui_info_target[i].valid)
-							gtk_trg_update( ui_info_target[i].dev, "Dead" );
-					}
-					// gtk_trg_bcast("Scanning", cur_team);
+				if( cur_time - round_starting_time > TIME_ENDING ){
+					state_change(STATE_TRGTON, status);
 				}
-				gbl_state_time = round_starting_time - cur_time + 5;
+				gbl_state_time = round_starting_time - cur_time + TIME_ENDING;
 				break;
 			case STATE_TRGTON:
-				if( cur_time - round_starting_time > 8 ){
-					state = STATE_SCNLSR;
-					round_starting_time = time(NULL);
-					printf("\nstate change to STATE_SCNLSR\n");
-					gtk_str_state_update("STATE_SCNLSR");
+				if( cur_time - round_starting_time > TIME_TRGTON ){
+					state_change(STATE_SCNLSR, status);
 				}
-				gbl_state_time = round_starting_time - cur_time + 8;
+				gbl_state_time = round_starting_time - cur_time + TIME_TRGTON;
 				break;
 			case STATE_SCNLSR:
-				if( cur_time - round_starting_time > 8 ){
-					state = STATE_TRGTOF;
-					round_starting_time = time(NULL);
-					printf("\nstate change to STATE_TRGTOF\n");
-					gtk_str_state_update("STATE_TRGTOF");
+				if( cur_time - round_starting_time > TIME_SCNLSR ){
+					state_change(STATE_TRGTOF, status);
 				}
-				gbl_state_time = round_starting_time - cur_time + 8;
+				gbl_state_time = round_starting_time - cur_time + TIME_SCNLSR;
 				break;
 			case STATE_TRGTOF:
-				if( cur_time - round_starting_time > 8 ){
-					state = STATE_NOTHIN;
-					cur_team = (++cur_team)%2;
-					round_starting_time = time(NULL);
-					printf("\nstate change to STATE_NOTHIN\n");
-					gtk_str_state_update("STATE_NOTHIN");
-					for( i=0; i<7; i++ ){
-						if(ui_info_target[i].valid && ui_info_target[i].dev->health[cur_team]>0)
-							gtk_trg_update( ui_info_target[i].dev, "Idle" );
-						else if(ui_info_target[i].valid)
-							gtk_trg_update( ui_info_target[i].dev, "Dead" );
-					}
-					// gtk_trg_bcast("Idle", cur_team);
+				if( cur_time - round_starting_time > TIME_TRGTOF ){
+					state_change(STATE_NOTHIN, status);
 				}
-				gbl_state_time = round_starting_time - cur_time + 8;
+				gbl_state_time = round_starting_time - cur_time + TIME_TRGTOF;
 				break;
 		}
 
@@ -404,4 +375,64 @@ int main(int argc, char **argv)
 		}
 	}
 	return 0;
+}
+
+void state_change( int target, struct sStatus status ){
+	int i;
+	char buf[50];
+	switch(target){
+		case STATE_MOVING:
+			*status.state = STATE_MOVING;
+			*status.round_starting_time = time(NULL);
+			printf("\nstate change to STATE_MOVING\n");
+			sprintf( buf, "STATE_MOVING%d", *status.cur_team);
+			gtk_str_state_update(buf);
+			// gtk_str_state_update("STATE_MOVING");
+			break;
+		case STATE_ENDING:
+			*status.state = STATE_ENDING;
+			*status.round_starting_time = time(NULL);
+			printf("\nstate change to STATE_ENDING\n");
+			gtk_str_state_update("STATE_ENDING");
+			gtk_tnk_bcast("Idle");
+			break;
+		case STATE_TRGTON:
+			*status.state = STATE_TRGTON;
+			*status.round_starting_time = time(NULL);
+			printf("\nstate change to STATE_TRGTON\n");
+			gtk_str_state_update("STATE_TRGTON");
+			for( i=0; i<7; i++ ){
+				if(ui_info_target[i].valid && ui_info_target[i].dev->health[*status.cur_team]>0)
+					gtk_trg_update( ui_info_target[i].dev, "Scanning" );
+				else if(ui_info_target[i].valid)
+					gtk_trg_update( ui_info_target[i].dev, "Dead" );
+			}
+			break;
+		case STATE_SCNLSR:
+			*status.state = STATE_SCNLSR;
+			*status.round_starting_time = time(NULL);
+			printf("\nstate change to STATE_SCNLSR\n");
+			gtk_str_state_update("STATE_SCNLSR");
+			break;
+		case STATE_TRGTOF:
+			*status.state = STATE_TRGTOF;
+			*status.round_starting_time = time(NULL);
+			printf("\nstate change to STATE_TRGTOF\n");
+			gtk_str_state_update("STATE_TRGTOF");
+			break;
+		case STATE_NOTHIN:
+			*status.state = STATE_NOTHIN;
+			*status.cur_team = (++(*status.cur_team))%2;
+			*status.round_starting_time = time(NULL);
+			printf("\nstate change to STATE_NOTHIN\n");
+			gtk_str_state_update("STATE_NOTHIN");
+			for( i=0; i<7; i++ ){
+				if(ui_info_target[i].valid && ui_info_target[i].dev->health[*status.cur_team]>0)
+					gtk_trg_update( ui_info_target[i].dev, "Idle" );
+				else if(ui_info_target[i].valid)
+					gtk_trg_update( ui_info_target[i].dev, "Dead" );
+			}
+			// gtk_trg_bcast("Idle", cur_team);
+			break;
+	}
 }

@@ -48,6 +48,19 @@
 #define	STATE_SCNLSR 4
 #define STATE_TRGTOF 5
 
+#define TIME_NOTHIN 5
+#define TIME_MOVING 26
+#define TIME_ENDING 3
+#define TIME_TRGTON 3
+#define TIME_SCNLSR 5
+#define TIME_TRGTOF 3
+
+struct sStatus{
+    int *state;
+    int *cur_team;
+    time_t *round_starting_time;
+};
+
 struct tank_info{
     char name[30];
     int side, id;   // (side,id) is a bijection to each player
