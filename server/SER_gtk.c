@@ -75,7 +75,7 @@ void gtk_tnk_update( DEVICE *dev, char *str ){
 }
 
 void gtk_trg_update( DEVICE *dev, char *str ){
-	int i, j;
+	int i;
 	for( i=0; i<7; i++ ){
 		if(ui_info_target[i].valid && ui_info_target[i].dev==dev){
 			strcpy(ui_info_target[i].dev->stat,str);

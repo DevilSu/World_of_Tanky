@@ -96,7 +96,6 @@ gboolean gtk_timer_update(gpointer data)
 
 gboolean gtk_player_update(gpointer data)
 {
-    GtkLabel ***label = (GtkLabel***)data;
     int i, j;
     char buf[256];
     memset(buf, 0, 256);
@@ -121,7 +120,6 @@ gboolean gtk_player_update(gpointer data)
 
 gboolean gtk_player_info_update(gpointer data)
 {
-    GtkLabel *label = (GtkLabel*)data;
     int i,j;
     char buf[256];
     memset(buf, 0, 256);
@@ -143,7 +141,6 @@ gboolean gtk_player_info_update(gpointer data)
 
 gboolean gtk_target_info_update(gpointer data)
 {
-    GtkLabel *label = (GtkLabel*)data;
     int i;
     char buf[256];
     memset(buf, 0, 256);
@@ -163,7 +160,6 @@ gboolean gtk_target_info_update(gpointer data)
 
 gboolean gtk_target_update(gpointer data)
 {
-    GtkLabel *label = (GtkLabel*)data;
     int i;
     char buf[256];
     memset(buf, 0, 256);
@@ -182,7 +178,6 @@ gboolean gtk_target_update(gpointer data)
 
 gboolean gtk_score_update(gpointer data)
 {
-    GtkLabel *label = (GtkLabel*)data;
     int i;
     char buf[256];
     memset(buf, 0, 256);

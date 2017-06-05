@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 	listen(lisfd, LISTENQ);
 
 	// set up select function
-	int i, j, k, maxi, maxfd;
+	int i, j, maxi, maxfd;
 	int nready;
 	ssize_t n;
 	fd_set rset, allset;
@@ -103,7 +103,6 @@ int main(int argc, char **argv)
 
 	// set up device
 	DEVICE dev[NUM_OF_DEV];
-	struct entry *dev_ptr;
 	for(i=0; i<NUM_OF_DEV; i++){
 		dev[i].fd=-1;
 	}
@@ -398,8 +397,10 @@ void state_handler( int state, time_t round_starting_time, struct sStatus status
 }
 
 void state_change( int target, struct sStatus status ){
-	int i;
+	int i, cur_team;
 	char buf[50];
+
+	cur_team = *status.cur_team;
 	switch(target){
 		case STATE_MOVING:
 			*status.state = STATE_MOVING;
@@ -442,7 +443,7 @@ void state_change( int target, struct sStatus status ){
 			break;
 		case STATE_NOTHIN:
 			*status.state = STATE_NOTHIN;
-			*status.cur_team = (++(*status.cur_team))%2;
+			*(status.cur_team) = (cur_team+1)%2;
 			*status.round_starting_time = time(NULL);
 			printf("\nstate change to STATE_NOTHIN\n");
 			gtk_str_state_update("STATE_NOTHIN");
