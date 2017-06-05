@@ -49,15 +49,6 @@ int gbl_player_num, gbl_player_info;
 int gbl_target_num, gbl_target_info;
 struct ui_info_node ui_info_player[2][1], ui_info_target[7];
 
-SLIST_HEAD(slisthead, entry)\
-    trg_head = SLIST_HEAD_INITIALIZER(trg_head),\
-    tnk_head = SLIST_HEAD_INITIALIZER(tnk_head);
-struct slisthead *headp;
-struct entry {
-    SLIST_ENTRY(entry) entries;
-    struct device *ptr;
-}*np;
-
 int main(int argc, char **argv)
 {
 	// set up GTK
@@ -189,8 +180,6 @@ int main(int argc, char **argv)
 				{
 					dev[i].fd=confd; // save descriptor
 					dev[i].new_comer = 1;
-					dev_ptr = (struct entry*) malloc( sizeof(struct entry));
-					dev_ptr->ptr = &dev[i];
 					break;
 				}
 			}
