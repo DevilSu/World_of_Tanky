@@ -49,15 +49,6 @@ int gbl_player_num, gbl_player_info;
 int gbl_target_num, gbl_target_info;
 struct ui_info_node ui_info_player[2][1], ui_info_target[7];
 
-SLIST_HEAD(slisthead, entry)\
-    trg_head = SLIST_HEAD_INITIALIZER(trg_head),\
-    tnk_head = SLIST_HEAD_INITIALIZER(tnk_head);
-struct slisthead *headp;
-struct entry {
-    SLIST_ENTRY(entry) entries;
-    struct device *ptr;
-}*np;
-
 int main(int argc, char **argv)
 {
 	// set up GTK
@@ -94,7 +85,7 @@ int main(int argc, char **argv)
 	listen(lisfd, LISTENQ);
 
 	// set up select function
-	int i, j, k, maxi, maxfd;
+	int i, j, maxi, maxfd;
 	int nready;
 	ssize_t n;
 	fd_set rset, allset;
@@ -112,10 +103,8 @@ int main(int argc, char **argv)
 
 	// set up device
 	DEVICE dev[NUM_OF_DEV];
-	struct entry *dev_ptr;
 	for(i=0; i<NUM_OF_DEV; i++){
 		dev[i].fd=-1;
-		dev[i].new_comer = 0;
 	}
 
 	gtk_tnk_init();
@@ -139,25 +128,17 @@ int main(int argc, char **argv)
 		state_str = state + '0';
 		for(i=0; i<=maxi; i++){
 
-			// Update new-coming client
-			if(dev[i].new_comer && dev[i].fd>=0){
-				write(dev[i].fd, &state_str, 1);
-				printf("Send initial  state %d to dev[%d]\n", state_str-'0', i);
-				dev[i].state = state;
-				dev[i].new_comer = 0;
-			}
-
 			// Update the other client
-			else if( dev[i].new_comer==0 && dev[i].state != state ){
+			if( dev[i].state != state ){
 				dev[i].state = state;
 				switch(dev[i].id){
-					case 2:
+					case TANK:
 						if( state==STATE_MOVING || state==STATE_SCNLSR || state==STATE_NOTHIN ){
 							write(dev[i].fd, &state_str, 1);
 							printf("Send changing state %d(%c) to dev[%d]\n", state_str-'0', state_str, i);
 						}
 						break;
-					case 3:
+					case TRGT:
 						if( state==STATE_TRGTON || state==STATE_TRGTOF ){
 							if( dev[i].health>0 ){
 								write(dev[i].fd, &state_str, 1);
@@ -188,9 +169,6 @@ int main(int argc, char **argv)
 				if(dev[i].fd<0)
 				{
 					dev[i].fd=confd; // save descriptor
-					dev[i].new_comer = 1;
-					dev_ptr = (struct entry*) malloc( sizeof(struct entry));
-					dev_ptr->ptr = &dev[i];
 					break;
 				}
 			}
@@ -276,13 +254,13 @@ void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status ){
 	switch(state){
 		case STATE_NOTHIN:
 			switch(dev->id){
-				case 3: // Ignore target's ping
+				case TRGT: // Ignore target's ping
 					break;
 			}
 			break;
 		case STATE_MOVING:
 			switch(dev->id){
-				case 2:
+				case TANK:
 					// Ignore tank's ping
 					printf("INFO: Tank %s\n", buf);
 					switch(buf[0]){
@@ -297,34 +275,34 @@ void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status ){
 							break;
 					}
 					break;
-				case 3: // Ignore target's ping
+				case TRGT: // Ignore target's ping
 					break;
 			}
 			break;
 		case STATE_ENDING:
 			switch(dev->id){
-				case 2:	// Identify tank to stop ONCE
-				case 3: // Ignore target's ping
+				case TANK:	// Identify tank to stop ONCE
+				case TRGT: // Ignore target's ping
 					break;
 			}
 			break;
 		case STATE_TRGTON:
 			switch(dev->id){
-				case 2:	// Ignore tank's ping
-				case 3: // Identify target to scan always
+				case TANK:	// Ignore tank's ping
+				case TRGT: // Identify target to scan always
 					break;
 			}
 			break;
 		case STATE_SCNLSR:
 			switch(dev->id){
-				case 2:	// Identify tank to open laser ONCE
-				case 3: // Identify target to scan always 
+				case TANK:	// Identify tank to open laser ONCE
+				case TRGT: // Identify target to scan always 
 					break;
 			}
 			break;
 		case STATE_TRGTOF:
 			switch(dev->id){
-				case 3: // Ignore target's ping
+				case TRGT: // Ignore target's ping
 					printf("INFO: %s(%d)\n", buf, atoi(buf));
 					if(dev->health[cur_team]<=0){
 						gtk_trg_update( dev, "Struggle" );
@@ -345,7 +323,7 @@ void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status ){
 						gtk_trg_update( dev, "Error" );
 					}
 					break;
-				case 2:	// Identify tank ONCE
+				case TANK:	// Identify tank ONCE
 					break;
 			}
 			break;
@@ -419,8 +397,10 @@ void state_handler( int state, time_t round_starting_time, struct sStatus status
 }
 
 void state_change( int target, struct sStatus status ){
-	int i;
+	int i, cur_team;
 	char buf[50];
+
+	cur_team = *status.cur_team;
 	switch(target){
 		case STATE_MOVING:
 			*status.state = STATE_MOVING;
@@ -463,7 +443,7 @@ void state_change( int target, struct sStatus status ){
 			break;
 		case STATE_NOTHIN:
 			*status.state = STATE_NOTHIN;
-			*status.cur_team = (++(*status.cur_team))%2;
+			*(status.cur_team) = (cur_team+1)%2;
 			*status.round_starting_time = time(NULL);
 			printf("\nstate change to STATE_NOTHIN\n");
 			gtk_str_state_update("STATE_NOTHIN");
