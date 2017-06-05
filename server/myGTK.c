@@ -60,7 +60,7 @@ void *gtk_thread(void *arg)
 }
 
 void on_btn_start_clicked(){
-    gbl_game_start = 1;
+    gbl_button_pressed = 1;
     return;
 }
 

@@ -30,7 +30,7 @@ gboolean gtk_target_update(gpointer data);
 gboolean gtk_score_update(gpointer data);
 
 extern int sec_expired;
-extern char gbl_game_start;
+extern char gbl_game_start, gbl_button_pressed;
 extern char gbl_state[];
 extern int gbl_score[];
 extern int gbl_state_time;

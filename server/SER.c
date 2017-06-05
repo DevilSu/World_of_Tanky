@@ -40,7 +40,7 @@ void gtk_str_state_update( char *str );
 void state_handler( int state, time_t round_starting_time, struct sStatus status );
 void state_change( int target, struct sStatus status );
 
-char gbl_game_start = 0;
+char gbl_game_start = 0, gbl_button_pressed = 0;
 char gbl_state[30] = "Game start";
 int gbl_score[2];
 int gbl_state_time;
@@ -124,6 +124,10 @@ int main(int argc, char **argv)
 	{
 		// State updater
 		cur_time = time(NULL);
+		if(!gbl_game_start && gbl_button_pressed){
+			gbl_game_start = 1;
+			gbl_button_pressed = 0;
+		}
 		if(!gbl_game_start){
 			round_starting_time = cur_time;
 		}
