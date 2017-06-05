@@ -39,6 +39,7 @@ void gtk_sco_increment( int team, int value );
 void gtk_str_state_update( char *str );
 void state_handler( int state, time_t round_starting_time, struct sStatus status );
 void state_change( int target, struct sStatus status );
+void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status );
 
 char gbl_game_start = 0, gbl_button_pressed = 0;
 char gbl_state[30] = "Game start";
@@ -127,6 +128,7 @@ int main(int argc, char **argv)
 		if(!gbl_game_start && gbl_button_pressed){
 			gbl_game_start = 1;
 			gbl_button_pressed = 0;
+
 		}
 		if(!gbl_game_start){
 			round_starting_time = cur_time;
@@ -258,85 +260,7 @@ int main(int argc, char **argv)
 						printf("state = %d\n", state);
 						continue;
 					}
-
-					// Data from other clients
-					switch(state){
-						case STATE_NOTHIN:
-							switch(dev[i].id){
-								case 3: // Ignore target's ping
-									break;
-							}
-							break;
-						case STATE_MOVING:
-							switch(dev[i].id){
-								case 2:
-									// Ignore tank's ping
-									printf("INFO: Tank %s\n", buf);
-									switch(buf[0]){
-										case STATE_MOVING+'0':
-											gtk_tnk_update( &dev[i], "Moving");
-											break;
-										case 'k':
-											gtk_tnk_update( &dev[i], "Finish");
-											break;
-										default:
-											gtk_tnk_update( &dev[i], "Error!");
-											break;
-									}
-									break;
-								case 3: // Ignore target's ping
-									break;
-							}
-							break;
-						case STATE_ENDING:
-							switch(dev[i].id){
-								case 2:	// Identify tank to stop ONCE
-								case 3: // Ignore target's ping
-									break;
-							}
-							break;
-						case STATE_TRGTON:
-							switch(dev[i].id){
-								case 2:	// Ignore tank's ping
-								case 3: // Identify target to scan always
-									break;
-							}
-							break;
-						case STATE_SCNLSR:
-							switch(dev[i].id){
-								case 2:	// Identify tank to open laser ONCE
-								case 3: // Identify target to scan always 
-									break;
-							}
-							break;
-						case STATE_TRGTOF:
-							switch(dev[i].id){
-								case 3: // Ignore target's ping
-									printf("INFO: %s(%d)\n", buf, atoi(buf));
-									if(dev[i].health[cur_team]<=0){
-										gtk_trg_update( &dev[i], "Struggle" );
-									}
-									else if(atoi(buf)){
-										if(dev[i].health[cur_team]>0)
-											gtk_sco_increment(cur_team,atoi(buf));
-										dev[i].health[cur_team] -= atoi(buf);
-										if(dev[i].health[cur_team]>0)
-											gtk_trg_update( &dev[i], "Hit" );
-										else
-											gtk_trg_update( &dev[i], "Broken" );
-									}
-									else if(buf[0]=='0'){
-										gtk_trg_update( &dev[i], "Save" );
-									}
-									else{
-										gtk_trg_update( &dev[i], "Error" );
-									}
-									break;
-								case 2:	// Identify tank ONCE
-									break;
-							}
-							break;
-					}
+					packt_handler( state, &dev[i], buf, status );
 				}
 				if(--nready<=0) break; // no more readable descriptors
 			}
@@ -345,6 +269,89 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status ){
+	int cur_team = *(status.cur_team);
+
+	// Data from other clients
+	switch(state){
+		case STATE_NOTHIN:
+			switch(dev->id){
+				case 3: // Ignore target's ping
+					break;
+			}
+			break;
+		case STATE_MOVING:
+			switch(dev->id){
+				case 2:
+					// Ignore tank's ping
+					printf("INFO: Tank %s\n", buf);
+					switch(buf[0]){
+						case STATE_MOVING+'0':
+							gtk_tnk_update( dev, "Moving");
+							break;
+						case 'k':
+							gtk_tnk_update( dev, "Finish");
+							break;
+						default:
+							gtk_tnk_update( dev, "Error!");
+							break;
+					}
+					break;
+				case 3: // Ignore target's ping
+					break;
+			}
+			break;
+		case STATE_ENDING:
+			switch(dev->id){
+				case 2:	// Identify tank to stop ONCE
+				case 3: // Ignore target's ping
+					break;
+			}
+			break;
+		case STATE_TRGTON:
+			switch(dev->id){
+				case 2:	// Ignore tank's ping
+				case 3: // Identify target to scan always
+					break;
+			}
+			break;
+		case STATE_SCNLSR:
+			switch(dev->id){
+				case 2:	// Identify tank to open laser ONCE
+				case 3: // Identify target to scan always 
+					break;
+			}
+			break;
+		case STATE_TRGTOF:
+			switch(dev->id){
+				case 3: // Ignore target's ping
+					printf("INFO: %s(%d)\n", buf, atoi(buf));
+					if(dev->health[cur_team]<=0){
+						gtk_trg_update( dev, "Struggle" );
+					}
+					else if(atoi(buf)){
+						if(dev->health[cur_team]>0)
+							gtk_sco_increment(cur_team,atoi(buf));
+						dev->health[cur_team] -= atoi(buf);
+						if(dev->health[cur_team]>0)
+							gtk_trg_update( dev, "Hit" );
+						else
+							gtk_trg_update( dev, "Broken" );
+					}
+					else if(buf[0]=='0'){
+						gtk_trg_update( dev, "Save" );
+					}
+					else{
+						gtk_trg_update( dev, "Error" );
+					}
+					break;
+				case 2:	// Identify tank ONCE
+					break;
+			}
+			break;
+	}
+
+}
 void state_handler( int state, time_t round_starting_time, struct sStatus status ){
 	time_t cur_time = time(NULL);
 	switch(state){
