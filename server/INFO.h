@@ -75,6 +75,7 @@ typedef struct device
     int new_comer;
     int health[2];
     char *name, *stat;
+    int flag[2];
 
 }DEVICE;
 

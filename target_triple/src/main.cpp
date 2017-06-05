@@ -9,7 +9,7 @@
 #define IP "192.168.0.206"
 #define PORT 5000
 
-#define LED1 13
+#define LED1 12
 #define LED2 4
 // Pin out information
 SoftwareSerial ESP8266(10,11); // RX, TX
@@ -83,6 +83,7 @@ void loop() { // run over and over
         // if(ret[i]=='0') 
         if(ret[i]!='3') return;
         else{
+            esp8266_sendData("3");
             wifi_enable = 0;
             for( i=0; i<3; i++ ){
                 being_hit[i] = 0;

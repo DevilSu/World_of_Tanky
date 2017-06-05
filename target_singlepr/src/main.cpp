@@ -77,6 +77,7 @@ void loop() { // run over and over
         // if(ret[i]=='0') 
         if(ret[i]!='3') return;
         else{
+            esp8266_sendData("3\n");
             wifi_enable = 0;
             being_hit = 0;
             sensing_counter = 0;

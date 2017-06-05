@@ -177,6 +177,7 @@ int main(int argc, char **argv)
 			// setup device info
 			memset(buf, 0, MAXLINE);
 			read(dev[i].fd, buf, 2); // ex. "2\n"
+			dev[i].flag[0] = 0;
 			dev[i].id=atoi(buf);
 			dev[i].ip=cliaddr.sin_addr;
 			dev[i].port=cliaddr.sin_port;
@@ -251,6 +252,7 @@ void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status ){
 	int cur_team = *(status.cur_team);
 
 	// Data from other clients
+	printf("Receive a packet: %s from %s\n", buf, dev->name);
 	switch(state){
 		case STATE_NOTHIN:
 			switch(dev->id){
@@ -288,8 +290,12 @@ void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status ){
 			break;
 		case STATE_TRGTON:
 			switch(dev->id){
-				case TANK:	// Ignore tank's ping
-				case TRGT: // Identify target to scan always
+				case TRGT:
+					if(buf[0]=='3') dev->flag[0] = 1;
+					else{
+						// TODO: Echo error
+					}
+					// Identify target to scan always
 					break;
 			}
 			break;
@@ -306,6 +312,7 @@ void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status ){
 					printf("INFO: %s(%d)\n", buf, atoi(buf));
 					if(dev->health[cur_team]<=0){
 						gtk_trg_update( dev, "Struggle" );
+						dev->flag[1] = 1;
 					}
 					else if(atoi(buf)){
 						if(dev->health[cur_team]>0)
@@ -315,9 +322,11 @@ void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status ){
 							gtk_trg_update( dev, "Hit" );
 						else
 							gtk_trg_update( dev, "Broken" );
+						dev->flag[1] = 1;
 					}
 					else if(buf[0]=='0'){
 						gtk_trg_update( dev, "Save" );
+						dev->flag[1] = 1;
 					}
 					else{
 						gtk_trg_update( dev, "Error" );
@@ -331,6 +340,7 @@ void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status ){
 
 }
 void state_handler( int state, time_t round_starting_time, struct sStatus status ){
+	int i;
 	time_t cur_time = time(NULL);
 	switch(state){
 		case STATE_NOTHIN:
@@ -371,6 +381,16 @@ void state_handler( int state, time_t round_starting_time, struct sStatus status
 				state_change(STATE_SCNLSR, status);
 				gbl_button_pressed = 0;
 			}
+			else{
+				for( i=0; i<7; i++ ){
+					if(ui_info_target[i].valid && ui_info_target[i].dev->health[*status.cur_team]>0 && ui_info_target[i].dev->flag[0]==0){
+						break;
+					}
+				}
+				if(i==7){
+					state_change(STATE_SCNLSR, status);
+				}
+			}
 			gbl_state_time = round_starting_time - cur_time + TIME_TRGTON;
 			break;
 		case STATE_SCNLSR:
@@ -390,6 +410,16 @@ void state_handler( int state, time_t round_starting_time, struct sStatus status
 			else if( gbl_button_pressed ){
 				state_change(STATE_NOTHIN, status);
 				gbl_button_pressed = 0;
+			}
+			else{
+				for( i=0; i<7; i++ ){
+					if(ui_info_target[i].valid && ui_info_target[i].dev->health[*status.cur_team]>0 && ui_info_target[i].dev->flag[1]==0){
+						break;
+					}
+				}
+				if(i==7){
+					state_change(STATE_NOTHIN, status);
+				}
 			}
 			gbl_state_time = round_starting_time - cur_time + TIME_TRGTOF;
 			break;
@@ -427,6 +457,12 @@ void state_change( int target, struct sStatus status ){
 					gtk_trg_update( ui_info_target[i].dev, "Scanning" );
 				else if(ui_info_target[i].valid)
 					gtk_trg_update( ui_info_target[i].dev, "Dead" );
+
+				// Reset required flag
+				if(ui_info_target[i].valid){
+					ui_info_target[i].dev->flag[0] = 0;
+				}
+
 			}
 			break;
 		case STATE_SCNLSR:
@@ -440,6 +476,13 @@ void state_change( int target, struct sStatus status ){
 			*status.round_starting_time = time(NULL);
 			printf("\nstate change to STATE_TRGTOF\n");
 			gtk_str_state_update("STATE_TRGTOF");
+
+			for( i=0; i<7; i++ ){
+				// Reset required flag
+				if(ui_info_target[i].valid){
+					ui_info_target[i].dev->flag[1] = 0;
+				}
+			}
 			break;
 		case STATE_NOTHIN:
 			*status.state = STATE_NOTHIN;
