@@ -42,6 +42,7 @@ void state_change( int target, struct sStatus status );
 void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status );
 int packt_new_handler( DEVICE *dev, int lisfd );
 int serv_find_empty_dev( DEVICE *dev_list );
+void state_send( DEVICE *dev, int state );
 
 char gbl_game_start = 0, gbl_button_pressed = 0;
 char gbl_state[30] = "Game start";
@@ -61,7 +62,6 @@ int main(int argc, char **argv)
 	// set up TCP server
 	int cur_team = 0;
 	int state;
-	char state_str;
 	int lisfd, confd, sockfd;
 	int flag=1;
 	int len=sizeof(int);
@@ -126,33 +126,8 @@ int main(int argc, char **argv)
 		state_handler( state, round_starting_time, status );
 
 		// Client state updating
-		state_str = state + '0';
 		for(i=0; i<=maxi; i++){
-
-			// Update the other client
-			if( dev[i].state != state ){
-				dev[i].state = state;
-				switch(dev[i].id){
-					case TANK:
-						if( state==STATE_MOVING || state==STATE_SCNLSR || state==STATE_NOTHIN ){
-							write(dev[i].fd, &state_str, 1);
-							printf("Send changing state %d(%c) to dev[%d]\n", state_str-'0', state_str, i);
-						}
-						break;
-					case TRGT:
-						if( state==STATE_TRGTON || state==STATE_TRGTOF ){
-							if( dev[i].health>0 ){
-								write(dev[i].fd, &state_str, 1);
-								printf("Send changing state %d to dev[%d]\n", state_str-'0', i);
-							}
-							else{
-								write(dev[i].fd, &state_str, 1);
-								printf("Send changing state %d to dev[%d]\n", state_str-'0', i);
-							}
-						}
-						break;
-				}
-			}
+			if( dev[i].state != state )	state_send( &dev[i], state);
 		}
 
 		// Read data from clients
@@ -515,4 +490,29 @@ int packt_new_handler( DEVICE *dev, int lisfd ){
 
 	printf("id=%d, ip=%s, port=%d\n", dev->id, inet_ntoa(dev->ip), ntohs(dev->port));
 	return confd;
+}
+
+void state_send( DEVICE *dev, int state ){
+	char state_str = state + '0';
+	dev->state = state;
+	switch(dev->id){
+		case TANK:
+			if( state==STATE_MOVING || state==STATE_SCNLSR || state==STATE_NOTHIN ){
+				write(dev->fd, &state_str, 1);
+				printf("Send changing state %d(%c) to dev[%d]\n", state_str-'0', state_str, dev->fd);
+			}
+			break;
+		case TRGT:
+			if( state==STATE_TRGTON || state==STATE_TRGTOF ){
+				if( dev->health>0 ){
+					write(dev->fd, &state_str, 1);
+					printf("Send changing state %d to dev[%d]\n", state_str-'0', dev->fd);
+				}
+				else{
+					write(dev->fd, &state_str, 1);
+					printf("Send changing state %d to dev[%d]\n", state_str-'0', dev->fd);
+				}
+			}
+			break;
+	}	
 }
