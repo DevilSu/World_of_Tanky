@@ -38,8 +38,8 @@ extern char gbl_game_start;
 extern char gbl_state[];
 extern int gbl_score[];
 extern int gbl_state_time;
-extern int gbl_player_num, gbl_player_info;
-extern int gbl_target_num, gbl_target_info;
+extern int gbl_player_info;
+extern int gbl_target_info;
 extern struct ui_info_node ui_info_player[][1], ui_info_target[];
 
 void gtk_trg_bcast( char *str, int team ){

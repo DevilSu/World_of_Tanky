@@ -45,8 +45,8 @@ char gbl_game_start = 0, gbl_button_pressed = 0;
 char gbl_state[30] = "Game start";
 int gbl_score[2];
 int gbl_state_time;
-int gbl_player_num, gbl_player_info;
-int gbl_target_num, gbl_target_info;
+int gbl_player_info;
+int gbl_target_info;
 struct ui_info_node ui_info_player[2][1], ui_info_target[7];
 
 int main(int argc, char **argv)
@@ -192,12 +192,10 @@ int main(int argc, char **argv)
 
 			switch(dev[i].id){
 				case TANK:
-					gbl_player_num = 1;
 					gbl_player_info = UI_PLAYER_REGISTER;
 					gtk_tnk_register( &dev[i] );
 					break;
 				case TRGT:
-					gbl_target_num = 1;
 					gbl_target_info = UI_TARGET_REGISTER;
 					for( j=0; j<2; j++ ) dev[i].health[j] = 1;
 					gtk_trg_register( &dev[i] );
