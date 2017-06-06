@@ -41,6 +41,7 @@ void state_handler( int state, time_t round_starting_time, struct sStatus status
 void state_change( int target, struct sStatus status );
 void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status );
 int packt_new_handler( DEVICE *dev, int lisfd );
+int serv_find_empty_dev( DEVICE *dev_list );
 
 char gbl_game_start = 0, gbl_button_pressed = 0;
 char gbl_state[30] = "Game start";
@@ -161,14 +162,9 @@ int main(int argc, char **argv)
 		nready=select(maxfd+1, &rset, NULL, NULL, &select_tout);
 		if(FD_ISSET(lisfd, &rset)) // new client connection
 		{
-			for(i=0; i<NUM_OF_DEV; i++)
-			{
-				if(dev[i].fd<0)
-				{
-					confd = packt_new_handler( &dev[i], lisfd );
-					break;
-				}
-			}
+			i = serv_find_empty_dev( dev );
+			confd = packt_new_handler( &dev[i], lisfd );
+
 			FD_SET(confd, &allset); //add new descriptor to set
 			if(confd>maxfd)maxfd=confd; // for select()
 			if(i>maxi)maxi=i; // max index in  client[] array
@@ -462,6 +458,12 @@ void state_change( int target, struct sStatus status ){
 			// gtk_trg_bcast("Idle", cur_team);
 			break;
 	}
+}
+
+int serv_find_empty_dev( DEVICE *dev_list ){
+	int i;
+	for(i=0; i<NUM_OF_DEV; i++)
+		if(dev_list[i].fd<0) return i;
 }
 
 int packt_new_handler( DEVICE *dev, int lisfd ){
