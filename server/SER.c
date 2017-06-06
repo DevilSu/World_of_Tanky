@@ -40,6 +40,7 @@ void gtk_str_state_update( char *str );
 void state_handler( int state, time_t round_starting_time, struct sStatus status );
 void state_change( int target, struct sStatus status );
 void packt_handler( int state, DEVICE *dev, char *buf, struct sStatus status );
+int packt_new_handler( DEVICE *dev, int lisfd );
 
 char gbl_game_start = 0, gbl_button_pressed = 0;
 char gbl_state[30] = "Game start";
@@ -63,8 +64,7 @@ int main(int argc, char **argv)
 	int lisfd, confd, sockfd;
 	int flag=1;
 	int len=sizeof(int);
-	socklen_t clilen;
-	struct sockaddr_in servaddr, cliaddr;
+	struct sockaddr_in servaddr;
 	struct timeval select_tout;
 	char buf[MAXLINE], msg[MAXLINE];
 	time_t round_starting_time, cur_time;
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 	listen(lisfd, LISTENQ);
 
 	// set up select function
-	int i, j, maxi, maxfd;
+	int i, maxi, maxfd;
 	int nready;
 	ssize_t n;
 	fd_set rset, allset;
@@ -161,49 +161,14 @@ int main(int argc, char **argv)
 		nready=select(maxfd+1, &rset, NULL, NULL, &select_tout);
 		if(FD_ISSET(lisfd, &rset)) // new client connection
 		{
-			clilen=sizeof(cliaddr);
-			confd=accept(lisfd, (struct sockaddr*)&cliaddr, &clilen);
-
 			for(i=0; i<NUM_OF_DEV; i++)
 			{
 				if(dev[i].fd<0)
 				{
-					dev[i].fd=confd; // save descriptor
+					confd = packt_new_handler( &dev[i], lisfd );
 					break;
 				}
 			}
-			if(i==NUM_OF_DEV)printf("To many clients!\n"); // can't accept client
-
-			// setup device info
-			memset(buf, 0, MAXLINE);
-			read(dev[i].fd, buf, 2); // ex. "2\n"
-			dev[i].flag[0] = 0;
-			dev[i].id=atoi(buf);
-			dev[i].ip=cliaddr.sin_addr;
-			dev[i].port=cliaddr.sin_port;
-
-			sprintf(buf, "num%d", dev[i].fd);
-			dev[i].name = (char*)malloc(30*sizeof(char));
-			strcpy(dev[i].name,buf);
-
-			sprintf(buf, "Register");
-			dev[i].stat = (char*)malloc(30*sizeof(char));
-			strcpy(dev[i].stat,buf);
-
-			switch(dev[i].id){
-				case TANK:
-					gbl_player_info = UI_PLAYER_REGISTER;
-					gtk_tnk_register( &dev[i] );
-					break;
-				case TRGT:
-					gbl_target_info = UI_TARGET_REGISTER;
-					for( j=0; j<2; j++ ) dev[i].health[j] = 1;
-					gtk_trg_register( &dev[i] );
-					break;
-			}
-
-			printf("id=%d, ip=%s, port=%d\n", dev[i].id, inet_ntoa(dev[i].ip), ntohs(dev[i].port));
-
 			FD_SET(confd, &allset); //add new descriptor to set
 			if(confd>maxfd)maxfd=confd; // for select()
 			if(i>maxi)maxi=i; // max index in  client[] array
@@ -497,4 +462,55 @@ void state_change( int target, struct sStatus status ){
 			// gtk_trg_bcast("Idle", cur_team);
 			break;
 	}
+}
+
+int packt_new_handler( DEVICE *dev, int lisfd ){
+
+	char buf[MAXLINE];
+	int i, j, confd;
+	struct sockaddr_in cliaddr;
+	socklen_t clilen=sizeof(cliaddr);
+	
+	confd=accept(lisfd, (struct sockaddr*)&cliaddr, &clilen);
+
+	for(i=0; i<NUM_OF_DEV; i++)
+	{
+		if(dev->fd<0)
+		{
+			dev->fd=confd; // save descriptor
+			break;
+		}
+	}
+	if(i==NUM_OF_DEV)printf("To many clients!\n"); // can't accept client
+
+	// setup device info
+	memset(buf, 0, MAXLINE);
+	read(dev->fd, buf, 2); // ex. "2\n"
+	dev->flag[0] = 0;
+	dev->id=atoi(buf);
+	dev->ip=cliaddr.sin_addr;
+	dev->port=cliaddr.sin_port;
+
+	sprintf(buf, "num%d", dev->fd);
+	dev->name = (char*)malloc(30*sizeof(char));
+	strcpy(dev->name,buf);
+
+	sprintf(buf, "Register");
+	dev->stat = (char*)malloc(30*sizeof(char));
+	strcpy(dev->stat,buf);
+
+	switch(dev->id){
+		case TANK:
+			gbl_player_info = UI_PLAYER_REGISTER;
+			gtk_tnk_register( &dev[i] );
+			break;
+		case TRGT:
+			gbl_target_info = UI_TARGET_REGISTER;
+			for( j=0; j<2; j++ ) dev->health[j] = 1;
+			gtk_trg_register( &dev[i] );
+			break;
+	}
+
+	printf("id=%d, ip=%s, port=%d\n", dev->id, inet_ntoa(dev->ip), ntohs(dev->port));
+	return confd;
 }
