@@ -1,4 +1,5 @@
 #include "mbed.h"
+#undef  CTRL_HANDSHAKE
 
 #define BIT0(x) (x&(1<<0))
 #define BIT1(x) (x&(1<<1))
@@ -86,7 +87,7 @@ void encoder_control() {
 #define SSID "EECS822"
 #define SSID_PASS "eecslab822"
 // TCP server information
-#define IP "192.168.0.197"
+#define IP "192.168.0.206"
 #define PORT 5000
 void esp8266_sendCmd( char *str, int time_delay );
 void esp8266_sendData( char *str );
@@ -161,7 +162,9 @@ int main()
             //                  Bit1 (0:ccw/up, 1:cw/down)
             cmd = HC06.getc();
             if(PARITY_SUM(cmd)%2){
+                #ifdef CTRL_HANDSHAKE
                 HC06.putc(0);
+                #endif
                 pc.printf("parity error at %x(%d)\r\n", cmd, PARITY_SUM(cmd));
                 continue;
             }
@@ -185,17 +188,23 @@ int main()
                         servo_left  = (rot_dir) ? 100 : 6 * rot_level * rot_level;
                         servo_right = (rot_dir) ? 6 * rot_level * rot_level : 100;
                         encoder_counter_left = 0; encoder_counter_right = 0;
+                        #ifdef CTRL_HANDSHAKE
                         HC06.putc(1);
+                        #endif
                         break;
                     case 1:
                         servo_left = -200; servo_right = -200;
                         encoder_counter_left = 0; encoder_counter_right = 0; 
+                        #ifdef CTRL_HANDSHAKE
                         HC06.putc(1);
+                        #endif
                         break;
                     case 0:
                         servo_left = 0; servo_right = 0;
-                        pc.printf("encoder = %d/%d\n", encoder_counter_left, encoder_counter_right);
+                        pc.printf("encoder = %d/%d\r\n", encoder_counter_left, encoder_counter_right);
+                        #ifdef CTRL_HANDSHAKE
                         HC06.putc(1);
+                        #endif
                         break;
                 }
             }
@@ -207,7 +216,9 @@ int main()
                     case 1: ramp_cannon_base = -30; break;
                     case 0: ramp_cannon_base = 0;   break;
                 }
+                #ifdef CTRL_HANDSHAKE
                 HC06.putc(1);
+                #endif
             }
 
             // Cannon vertical state
@@ -217,7 +228,9 @@ int main()
                 case 1: ramp_cannon_vert = 30; break;
                 case 0: ramp_cannon_vert = 0;   break;
                 }
-                    HC06.putc(1);
+                #ifdef CTRL_HANDSHAKE
+                HC06.putc(1);
+                #endif
             }
         }
 

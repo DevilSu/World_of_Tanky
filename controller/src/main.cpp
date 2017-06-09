@@ -76,11 +76,15 @@ void loop() { // run over and over
     // cmd = (char)level << 1;
     // cmd = (char)0x20;
 
+    #ifdef HANDSHAKE
     if (hc05.available()) {
         Serial.print("Receive:");
         Serial.print(hc05.read(), HEX);
     }
-    else if (Serial.available()) {
+    else
+    #endif
+
+    if (Serial.available()) {
         char c = Serial.read();
         // hc05.write(ADD_PARITY(c));
         Serial.print("Receive command: "); Serial.println(c, BIN);
