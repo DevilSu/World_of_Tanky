@@ -25,6 +25,24 @@
 #define BUTTON_B    11
 #define BUTTON_A    12
 
+class button{
+    public:
+    button( int input ){ pin = input; last_value = 0; value = 0; }
+    operator int(){ return digitalRead(pin); }
+    void update(){
+        last_value = value;
+        value = digitalRead(pin);
+    }
+    int posedge(){ return (last_value==0) && (value==1); }
+    int negedge(){ return (last_value==1) && (value==0); }
+
+private:
+    int pin;
+    int value, last_value;
+};
+
+button btn_up(BUTTON_UP), btn_down(BUTTON_DOWN), btn_left(BUTTON_LEFT), btn_right(BUTTON_RIGHT), btn_A(BUTTON_A), btn_B(BUTTON_B);
+
 SoftwareSerial hc05(HC05_RX,HC05_TX); // RX, TX
 int moving = 1;
 int cannon = 0;
@@ -66,7 +84,7 @@ void setup() {
 int level = 0, pinNum;
 void loop() { // run over and over
     unsigned char cmd = 0;
-    static int last_pin2 = 0, last_pin3 = 0, last_pin_right = 0, last_pin_left = 0;
+    // static int last_pin2 = 0, last_pin3 = 0, last_pin_right = 0, last_pin_left = 0;
     static unsigned long pin4_time=0, pinb_time=0, pin_left_time=0, pin_right_time=0;
 
     // int level = analogRead(0) / 128;
@@ -76,11 +94,15 @@ void loop() { // run over and over
     // cmd = (char)level << 1;
     // cmd = (char)0x20;
 
+    #ifdef HANDSHAKE
     if (hc05.available()) {
         Serial.print("Receive:");
         Serial.print(hc05.read(), HEX);
     }
-    else if (Serial.available()) {
+    else
+    #endif
+
+    if (Serial.available()) {
         char c = Serial.read();
         // hc05.write(ADD_PARITY(c));
         Serial.print("Receive command: "); Serial.println(c, BIN);
@@ -111,10 +133,8 @@ void loop() { // run over and over
     }
 // Serial.print(digitalRead(2));    
 // Serial.println(digitalRead(3));
-    if (digitalRead(BUTTON_UP) == 1) {
-Serial.println("up is pressed");
-        // posedge detection
-        if (last_pin2 == 0) {
+    btn_up.update();
+    if( btn_up.posedge() ){
             cmd |= 0x80;
             if(moving) cmd |= 0x10;
             else{
@@ -123,15 +143,10 @@ Serial.println("up is pressed");
             }
             hc05.write(ADD_PARITY(cmd));
             Serial.print("cmd = "); Serial.println(cmd, BIN);
-            last_pin2 = 1;
             delay(100);
             return;
-        }
     }
-
-    // negedge detection
-    else if ( last_pin2 == 1 ) {
-        
+    else if( btn_up.negedge() ){
         cmd &= 0x3F;
         if(moving) cmd |= 0x10;
         else{
@@ -140,15 +155,12 @@ Serial.println("up is pressed");
         }
         hc05.write(ADD_PARITY(cmd));
         Serial.print("cmd = "); Serial.println(cmd, BIN);
-        last_pin2 = 0;
         delay(100);
         return;
     }
 
-    if (digitalRead(BUTTON_DOWN) == 1) {
-Serial.println("down is pressed");
-        // posedge detection
-        if (last_pin3 == 0) {
+    btn_down.update();
+    if( btn_down.posedge() ){
             cmd |= 0x40;
             if(moving) cmd |= 0x10;
             else{
@@ -157,14 +169,10 @@ Serial.println("down is pressed");
             }
             hc05.write(ADD_PARITY(cmd));
             Serial.print("cmd = "); Serial.println(cmd, BIN);
-            last_pin3 = 1;
             delay(100);
             return;
-        }
     }
-
-    // negedge detection
-    else if ( last_pin3 == 1 ) {
+    else if( btn_down.negedge() ){
         cmd &= 0x3F;
         if(moving) cmd |= 0x10;
         else{
@@ -173,12 +181,12 @@ Serial.println("down is pressed");
         }
         hc05.write(ADD_PARITY(cmd));
         Serial.print("cmd = "); Serial.println(cmd, BIN);
-        last_pin3 = 0;
         delay(100);
         return;
     }
 
-    if (digitalRead(BUTTON_A) == 1) {
+
+    if (btn_A == 1) {
         if(millis()>pin4_time){
             pin4_time = millis()+500;
             moving = !moving;
@@ -187,7 +195,7 @@ Serial.print("switch moving");
         }
     }
 
-    if (digitalRead(BUTTON_B) == 1) {
+    if (btn_B == 1) {
         if(millis()>pinb_time){
             pinb_time = millis()+500;
             cmd |= 0x20;
@@ -196,60 +204,50 @@ Serial.print("switch moving");
         }
     }
 
-    if (digitalRead(BUTTON_LEFT) == 1) {
+    btn_left.update();
+    if(btn_left.posedge()){
         if(moving){
-            if(millis()>pin_left_time){
-                pin_left_time = millis()+500;
-                if(level!=-3) level--;
-    Serial.print("level = "); Serial.println(level);
-            }
+            pin_left_time = millis()+500;
+            if(level!=-3) level--;
         }
-        else if (last_pin_left == 0) {
+        else{
             cmd |= 0x80;
             cmd |= 0x08;
             hc05.write(ADD_PARITY(cmd));
             Serial.print("cmd = "); Serial.println(cmd, BIN);
-            last_pin_left = 1;
             delay(100);
             return;
         }
     }
-    // negedge detection
-    else if ( last_pin_left == 1 ) {
+    else if( btn_left.negedge() ){
         cmd &= 0x3F;
         cmd |= 0x08;
         hc05.write(ADD_PARITY(cmd));
         Serial.print("cmd = "); Serial.println(cmd, BIN);
-        last_pin_left = 0;
         delay(100);
         return;
     }
 
-    if (digitalRead(BUTTON_RIGHT) == 1) {
+    btn_right.update();
+    if( btn_right.posedge() ){
         if(moving){
-            if(millis()>pin_right_time){
-                pin_right_time = millis()+500;
-                if(level!=3) level++;
-    Serial.print("level = "); Serial.println(level);
-            }
+                    if(level!=3) level++;
+        Serial.print("level = "); Serial.println(level);
         }
-        else if (last_pin_right == 0) {
+        else{
             cmd |= 0x40;
             cmd |= 0x08;
             hc05.write(ADD_PARITY(cmd));
             Serial.print("cmd = "); Serial.println(cmd, BIN);
-            last_pin_right = 1;
             delay(100);
             return;
         }
     }
-    // negedge detection
-    else if ( last_pin_right == 1 ) {
+    else if( btn_right.negedge() ){
         cmd &= 0x3F;
         cmd |= 0x08;
         hc05.write(ADD_PARITY(cmd));
         Serial.print("cmd = "); Serial.println(cmd, BIN);
-        last_pin_right = 0;
         delay(100);
         return;
     }
