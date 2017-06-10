@@ -90,6 +90,7 @@ void encoder_control() {
 #define IP "192.168.0.206"
 #define PORT 5000
 void esp8266_sendCmd( char *str, int time_delay );
+void esp8266_sendCmd( char *str, int time_delay, char *target );
 void esp8266_sendData( char *str );
 void esp8266_recvCmd_blocking();
 void esp8266_getString( char *str, int *len, float time_delay );
@@ -117,15 +118,15 @@ int main()
     pc.printf("Start\n");
 
     // ESP8266 connecting wifi
-    esp8266_sendCmd("AT\r\n",.5);
+    esp8266_sendCmd("AT\r\n",3, "OK");
     sprintf( esp_cmd, "AT+CIPMUX=0\r\n");
-    esp8266_sendCmd( esp_cmd, 1);
+    esp8266_sendCmd( esp_cmd, 3, "OK");
     sprintf( esp_cmd, "ATE0\r\n");
-    esp8266_sendCmd( esp_cmd, 1);
+    esp8266_sendCmd( esp_cmd, 3, "OK");
     sprintf( esp_cmd, "AT+CWJAP=\"%s\",\"%s\"\r\n", SSID, SSID_PASS );
-    esp8266_sendCmd( esp_cmd, 5);
+    esp8266_sendCmd( esp_cmd, 15, "GOT IP");
     sprintf( esp_cmd, "AT+CIPSTART=\"TCP\",\"%s\",%d\r\n", IP, PORT );
-    esp8266_sendCmd( esp_cmd, 5);
+    esp8266_sendCmd( esp_cmd, 15, "CONNECT");
     esp8266_sendData("2");
 
     // Define ISR for servo, encoder, cannon
@@ -321,6 +322,28 @@ void esp8266_getString( char *str, int *len, float time_delay, char target ){
 }
 
 void esp8266_getString( char *str, int *len, float time_delay, char* target ){
+    int i;
+    char buf;
+    for( i=0, t.start(); t.read()<time_delay; ){
+        if(ESP8266.readable()){
+            buf = ESP8266.getc();
+            str[i++] = buf;
+            str[i] = 0;
+            if( target!=NULL && strstr(str, target)!=NULL ){
+pc.printf("Find target\r\n");
+                while( ESP8266.readable()!=0 ){
+                    buf = ESP8266.getc();
+                    str[i++] = buf;
+                }
+                break;
+            }
+        }
+        wait(.001);
+    }
+    t.stop();
+    t.reset();
+    str[i] = 0;
+    *len = i;
 }
 
 
@@ -340,9 +363,23 @@ void esp8266_sendCmd( char *str, int time_delay ){
     pc.printf("\r\nSend: %s", str);
     ESP8266.printf("%s",str);
     // pc.printf("Return: ");
-    
+
     // Get string from ESP8266
     if(time_delay) esp8266_getString( ret, &i, time_delay );
+
+    // Print out the received string
+    esp8266_dumpString( ret, i );
+}
+
+void esp8266_sendCmd( char *str, int time_delay, char *target ){
+
+    int i=0, j=0;
+    pc.printf("\r\nSend: %s", str);
+    ESP8266.printf("%s",str);
+    // pc.printf("Return: ");
+
+    // Get string from ESP8266
+    if(time_delay) esp8266_getString( ret, &i, time_delay, target );
 
     // Print out the received string
     esp8266_dumpString( ret, i );
