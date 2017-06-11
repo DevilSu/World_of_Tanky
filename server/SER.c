@@ -322,6 +322,7 @@ void state_handler( int state, time_t round_starting_time, struct sStatus status
 					}
 				}
 				if(i==7){
+					usleep(2000000);
 					state_change(STATE_SCNLSR, status);
 				}
 			}
